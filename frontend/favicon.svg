@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Luxe Hotel">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0d11" />
+      <stop offset="100%" stop-color="#06080b" />
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.16)" />
+      <stop offset="100%" stop-color="rgba(255,255,255,0.06)" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#bg)" />
+  <circle cx="32" cy="32" r="20" fill="rgba(255,255,255,0.06)" stroke="rgba(240,211,164,0.28)" />
+  <path
+    d="M23 42V20h4.5v8.5h9V20H41v22h-4.5v-9.5h-9V42z"
+    fill="#f0d3a4"
+  />
+</svg>
