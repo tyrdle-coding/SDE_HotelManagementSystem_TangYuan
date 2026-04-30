@@ -10,20 +10,34 @@ let dbPath;
 let app;
 jest.setTimeout(15000);
 
+/**
+ * Logs in and returns the raw session cookie string, e.g. "hotel_session=<token>".
+ */
 async function loginAs(email, password) {
-  const agent = request.agent(app);
-  const loginResponse = await agent.post('/api/auth/login').send({ email, password });
+  const res = await request(app).post('/api/auth/login').send({ email, password });
+  expect(res.status).toBe(200);
+  expect(res.body.user.email).toBe(email);
+  const setCookieHeader = res.headers['set-cookie'] ?? [];
+  expect(setCookieHeader).toEqual(
+    expect.arrayContaining([expect.stringContaining('hotel_session=')]),
+  );
+  const cookieLine = setCookieHeader.find((c) => c.startsWith('hotel_session=')) ?? '';
+  return cookieLine.split(';')[0]; // "hotel_session=<encoded-token>"
+}
 
-  expect(loginResponse.status).toBe(200);
-  expect(loginResponse.body.user.email).toBe(email);
-  expect(loginResponse.headers['set-cookie']).toEqual(expect.arrayContaining([expect.stringContaining('hotel_session=')]));
-  return agent;
+/** Wraps request(app) with a pre-attached session cookie. */
+function authed(cookie) {
+  return {
+    get:    (url) => request(app).get(url).set('Cookie', cookie),
+    post:   (url) => request(app).post(url).set('Cookie', cookie),
+    patch:  (url) => request(app).patch(url).set('Cookie', cookie),
+    delete: (url) => request(app).delete(url).set('Cookie', cookie),
+  };
 }
 
 beforeEach(async () => {
   tempDir = await mkdtemp(path.join(os.tmpdir(), 'hotel-app-test-'));
   dbPath = path.join(tempDir, 'db.json');
-
   const sourceDb = await readFile(new URL('./data/db.json', import.meta.url), 'utf8');
   await writeFile(dbPath, sourceDb);
   app = createApp({ dbPath });
@@ -35,107 +49,254 @@ afterEach(async () => {
   }
 });
 
-describe('hotel api auth and access control', () => {
+// ─── 1. Registration ──────────────────────────────────────────────────────────
+
+describe('registration', () => {
   test('signup creates a session immediately and stores a hashed password', async () => {
-    const signupResponse = await request(app).post('/api/auth/register').send({
+    const res = await request(app).post('/api/auth/register').send({
       name: 'Test User',
       email: 'newuser@example.com',
       password: 'secret123',
     });
 
-    expect(signupResponse.status).toBe(201);
-    expect(signupResponse.body.user.email).toBe('newuser@example.com');
-    expect(signupResponse.headers['set-cookie']).toEqual(expect.arrayContaining([expect.stringContaining('hotel_session=')]));
+    expect(res.status).toBe(201);
+    expect(res.body.user.email).toBe('newuser@example.com');
+    expect(res.headers['set-cookie']).toEqual(
+      expect.arrayContaining([expect.stringContaining('hotel_session=')]),
+    );
 
     const storedDb = JSON.parse(await readFile(dbPath, 'utf8'));
-    const storedUser = storedDb.users.find((user) => user.email === 'newuser@example.com');
+    const storedUser = storedDb.users.find((u) => u.email === 'newuser@example.com');
     expect(storedUser.passwordHash).toEqual(expect.any(String));
     expect(storedUser.password).toBeUndefined();
   });
 
+  test('signup rejects a duplicate email', async () => {
+    await request(app).post('/api/auth/register').send({
+      name: 'First',
+      email: 'dup@example.com',
+      password: 'password123',
+    });
+
+    const second = await request(app).post('/api/auth/register').send({
+      name: 'Second',
+      email: 'dup@example.com',
+      password: 'password456',
+    });
+
+    expect(second.status).toBe(409);
+  });
+
+  test('signup rejects a password shorter than 8 characters', async () => {
+    const res = await request(app).post('/api/auth/register').send({
+      name: 'Short Pass',
+      email: 'shortpass@example.com',
+      password: 'abc123',
+    });
+
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── 2. Login ─────────────────────────────────────────────────────────────────
+
+describe('login', () => {
   test('login sets a session cookie', async () => {
-    const loginResponse = await request(app).post('/api/auth/login').send({
+    const res = await request(app).post('/api/auth/login').send({
       email: 'guest@hhotel.com',
       password: 'guest123',
     });
 
-    expect(loginResponse.status).toBe(200);
-    expect(loginResponse.body.user.email).toBe('guest@hhotel.com');
-    expect(loginResponse.headers['set-cookie']).toEqual(expect.arrayContaining([expect.stringContaining('hotel_session=')]));
+    expect(res.status).toBe(200);
+    expect(res.body.user.email).toBe('guest@hhotel.com');
+    expect(res.headers['set-cookie']).toEqual(
+      expect.arrayContaining([expect.stringContaining('hotel_session=')]),
+    );
   });
 
-  test('non-admin users cannot create rooms', async () => {
-    const userAgent = await loginAs('guest@hhotel.com', 'guest123');
-    const response = await userAgent
-      .post('/api/rooms')
-      .send({
-        name: 'Test Room',
-        type: 'Suite',
-        price: 300,
-        image: 'https://example.com/room.jpg',
-        images: ['https://example.com/room.jpg'],
-        capacity: 2,
-        size: 40,
-        description: 'A secure test room',
-        amenities: ['WiFi'],
-        available: true,
-      });
+  test('login rejects an incorrect password', async () => {
+    const res = await request(app).post('/api/auth/login').send({
+      email: 'guest@hhotel.com',
+      password: 'wrongpassword',
+    });
 
-    expect(response.status).toBe(403);
+    expect(res.status).toBe(401);
   });
 
-  test('admin users can create rooms', async () => {
-    const adminAgent = await loginAs('admin@hhotel.com', 'admin123');
-    const response = await adminAgent
-      .post('/api/rooms')
-      .send({
-        name: 'Admin Suite',
-        type: 'Suite',
-        price: 520,
-        image: 'https://example.com/admin-suite.jpg',
-        images: ['https://example.com/admin-suite.jpg'],
-        capacity: 2,
-        size: 55,
-        description: 'Created by the admin account',
-        amenities: ['WiFi', 'Breakfast'],
-        available: true,
-      });
+  test('login rejects a non-existent email', async () => {
+    const res = await request(app).post('/api/auth/login').send({
+      email: 'nobody@example.com',
+      password: 'password123',
+    });
 
-    expect(response.status).toBe(201);
-    expect(response.body.room.name).toBe('Admin Suite');
-  });
-
-  test('bookings endpoint only returns the signed-in user bookings for standard users', async () => {
-    const userAgent = await loginAs('guest@hhotel.com', 'guest123');
-    const response = await userAgent.get('/api/bookings');
-
-    expect(response.status).toBe(200);
-    expect(response.body.bookings).toHaveLength(2);
-    expect(response.body.bookings.every((booking) => booking.userId === 'G001')).toBe(true);
-  });
-
-  test('admin stats require an admin session cookie', async () => {
-    const userAgent = await loginAs('guest@hhotel.com', 'guest123');
-    const forbiddenResponse = await userAgent.get('/api/admin/stats');
-
-    expect(forbiddenResponse.status).toBe(403);
-
-    const adminAgent = await loginAs('admin@hhotel.com', 'admin123');
-    const adminResponse = await adminAgent.get('/api/admin/stats');
-
-    expect(adminResponse.status).toBe(200);
-    expect(adminResponse.body.stats.totalBookings).toBeGreaterThan(0);
+    expect(res.status).toBe(401);
   });
 
   test('logout clears the session cookie and blocks protected endpoints afterwards', async () => {
-    const userAgent = await loginAs('guest@hhotel.com', 'guest123');
-    const logoutResponse = await userAgent.post('/api/auth/logout');
+    const cookie = await loginAs('guest@hhotel.com', 'guest123');
+    const logoutRes = await authed(cookie).post('/api/auth/logout');
 
-    expect(logoutResponse.status).toBe(200);
-    expect(logoutResponse.body.success).toBe(true);
-    expect(logoutResponse.headers['set-cookie']).toEqual(expect.arrayContaining([expect.stringContaining('hotel_session=;')]));
+    expect(logoutRes.status).toBe(200);
+    expect(logoutRes.body.success).toBe(true);
+    expect(logoutRes.headers['set-cookie']).toEqual(
+      expect.arrayContaining([expect.stringContaining('hotel_session=;')]),
+    );
 
-    const meResponse = await userAgent.get('/api/auth/me');
-    expect(meResponse.status).toBe(401);
+    // Without a session cookie the protected endpoint rejects the request
+    const meRes = await request(app).get('/api/auth/me');
+    expect(meRes.status).toBe(401);
+  });
+});
+
+// ─── 3. Room booking ──────────────────────────────────────────────────────────
+
+describe('room booking', () => {
+  test('anyone can list available rooms', async () => {
+    const res = await request(app).get('/api/rooms');
+
+    expect(res.status).toBe(200);
+    expect(res.body.rooms.length).toBeGreaterThan(0);
+  });
+
+  test('authenticated user can create a booking', async () => {
+    const cookie = await loginAs('guest@hhotel.com', 'guest123');
+    const res = await authed(cookie).post('/api/bookings').send({
+      roomId: '1',
+      userName: 'Luxury Guest',
+      checkIn: '2026-07-01',
+      checkOut: '2026-07-03',
+      guests: 2,
+      phone: '+60 12-881 0100',
+      specialRequests: '',
+      paymentMethod: 'bank_transfer',
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.booking.roomId).toBe('1');
+    expect(res.body.booking.status).toBe('pending');
+    expect(res.body.booking.totalPrice).toBeGreaterThan(0);
+  });
+
+  test('unauthenticated users cannot create a booking', async () => {
+    const res = await request(app).post('/api/bookings').send({
+      roomId: '1',
+      userName: 'Anonymous',
+      checkIn: '2026-07-01',
+      checkOut: '2026-07-03',
+      guests: 2,
+      phone: '+60 12-881 0100',
+    });
+
+    expect(res.status).toBe(401);
+  });
+
+  test('booking rejects a non-existent room', async () => {
+    const cookie = await loginAs('guest@hhotel.com', 'guest123');
+    const res = await authed(cookie).post('/api/bookings').send({
+      roomId: '999',
+      userName: 'Luxury Guest',
+      checkIn: '2026-07-01',
+      checkOut: '2026-07-03',
+      guests: 2,
+      phone: '+60 12-881 0100',
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  test('bookings endpoint only returns the signed-in user bookings for standard users', async () => {
+    const cookie = await loginAs('guest@hhotel.com', 'guest123');
+    const res = await authed(cookie).get('/api/bookings');
+
+    expect(res.status).toBe(200);
+    expect(res.body.bookings).toHaveLength(2);
+    expect(res.body.bookings.every((b) => b.userId === 'G001')).toBe(true);
+  });
+
+  test('user can mark their own booking as paid', async () => {
+    const cookie = await loginAs('guest@hhotel.com', 'guest123');
+    const res = await authed(cookie).patch('/api/bookings/B003/payment').send({ paymentStatus: 'paid' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.booking.paymentStatus).toBe('paid');
+    expect(res.body.booking.status).toBe('confirmed');
+  });
+});
+
+// ─── 4. Admin features ────────────────────────────────────────────────────────
+
+describe('admin features', () => {
+  test('admin stats require an admin session cookie', async () => {
+    const guestCookie = await loginAs('guest@hhotel.com', 'guest123');
+    const forbiddenRes = await authed(guestCookie).get('/api/admin/stats');
+    expect(forbiddenRes.status).toBe(403);
+
+    const adminCookie = await loginAs('admin@hhotel.com', 'admin123');
+    const adminRes = await authed(adminCookie).get('/api/admin/stats');
+    expect(adminRes.status).toBe(200);
+    expect(adminRes.body.stats.totalBookings).toBeGreaterThan(0);
+  });
+
+  test('non-admin users cannot create rooms', async () => {
+    const cookie = await loginAs('guest@hhotel.com', 'guest123');
+    const res = await authed(cookie).post('/api/rooms').send({
+      name: 'Test Room',
+      type: 'Suite',
+      price: 300,
+      image: 'https://example.com/room.jpg',
+      images: ['https://example.com/room.jpg'],
+      capacity: 2,
+      size: 40,
+      description: 'A secure test room',
+      amenities: ['WiFi'],
+      available: true,
+    });
+
+    expect(res.status).toBe(403);
+  });
+
+  test('admin users can create rooms', async () => {
+    const cookie = await loginAs('admin@hhotel.com', 'admin123');
+    const res = await authed(cookie).post('/api/rooms').send({
+      name: 'Admin Suite',
+      type: 'Suite',
+      price: 520,
+      image: 'https://example.com/admin-suite.jpg',
+      images: ['https://example.com/admin-suite.jpg'],
+      capacity: 2,
+      size: 55,
+      description: 'Created by the admin account',
+      amenities: ['WiFi', 'Breakfast'],
+      available: true,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.room.name).toBe('Admin Suite');
+  });
+
+  test('admin can view all bookings across all users', async () => {
+    const cookie = await loginAs('admin@hhotel.com', 'admin123');
+    const res = await authed(cookie).get('/api/bookings');
+
+    expect(res.status).toBe(200);
+    expect(res.body.bookings).toHaveLength(3);
+  });
+
+  test('admin can update a booking status', async () => {
+    const cookie = await loginAs('admin@hhotel.com', 'admin123');
+    const res = await authed(cookie).patch('/api/bookings/B002/status').send({ status: 'completed' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.booking.status).toBe('completed');
+  });
+
+  test('admin can delete a room', async () => {
+    const cookie = await loginAs('admin@hhotel.com', 'admin123');
+    const deleteRes = await authed(cookie).delete('/api/rooms/4');
+    expect(deleteRes.status).toBe(200);
+    expect(deleteRes.body.success).toBe(true);
+
+    const roomsRes = await request(app).get('/api/rooms');
+    expect(roomsRes.body.rooms.find((r) => r.id === '4')).toBeUndefined();
   });
 });
