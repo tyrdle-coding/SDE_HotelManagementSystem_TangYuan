@@ -277,7 +277,21 @@ export function createApp(options = {}) {
   app.use('/uploads', express.static(uploadsDir));
 
   app.get('/api/health', (_req, res) => {
-    res.json({ ok: true });
+    const startNs = process.hrtime.bigint();
+    const mem = process.memoryUsage();
+    const responseTimeMs = Number(process.hrtime.bigint() - startNs) / 1e6;
+
+    res.json({
+      ok: true,
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.floor(process.uptime()),
+      memory: {
+        rssBytes: mem.rss,
+        heapUsedBytes: mem.heapUsed,
+        heapTotalBytes: mem.heapTotal,
+      },
+      responseTimeMs,
+    });
   });
 
   app.get('/api/auth/me', requireAuth, (req, res) => {
