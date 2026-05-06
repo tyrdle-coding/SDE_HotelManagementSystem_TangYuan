@@ -1,5 +1,5 @@
 # H Hotel Booking Web Application
-
+Auto deploy testing
 This project is a full-stack hotel booking web app built for a Software Deployment and Evolution assignment. It includes a React frontend, an Express backend, local data storage, and a basic CI setup using GitHub Actions.
 
 The system lets users browse rooms, sign up, log in, make bookings, and view their booking history. It also includes admin pages for room management, booking management, and dashboard statistics.
