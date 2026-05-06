@@ -1,0 +1,170 @@
+{
+  "users": [
+    {
+      "id": "G001",
+      "name": "Luxury Guest",
+      "email": "guest@hhotel.com",
+      "password": "guest123",
+      "role": "guest"
+    },
+    {
+      "id": "A001",
+      "name": "Admin User",
+      "email": "admin@hhotel.com",
+      "role": "admin",
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "1",
+      "name": "Luxury Suite",
+      "type": "Suite",
+      "price": 1890,
+      "image": "https://images.unsplash.com/photo-1759223198981-661cadbbff36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMHN1aXRlJTIwYmVkcm9vbXxlbnwxfHx8fDE3NzYyMTIyNjh8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+      "images": [
+        "https://images.unsplash.com/photo-1759223198981-661cadbbff36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMHN1aXRlJTIwYmVkcm9vbXxlbnwxfHx8fDE3NzYyMTIyNjh8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        "https://images.unsplash.com/photo-1702675301342-cac2dc3ef15a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3RlbCUyMGRlbHV4ZSUyMHJvb20lMjBpbnRlcmlvcnxlbnwxfHx8fDE3NzYyMjg1NDd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+      ],
+      "capacity": 2,
+      "size": 65,
+      "description": "Experience ultimate luxury in our spacious suite featuring modern amenities, stunning city views, and elegant design.",
+      "amenities": [
+        "King Bed",
+        "Ocean View",
+        "Mini Bar",
+        "Work Desk",
+        "Smart TV",
+        "Coffee Machine",
+        "Balcony",
+        "High-Speed WiFi"
+      ],
+      "available": true
+    },
+    {
+      "id": "2",
+      "name": "Penthouse Paradise",
+      "type": "Penthouse",
+      "price": 3590,
+      "image": "https://images.unsplash.com/photo-1608463656552-7eef31884ab6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMHBlbnRob3VzZSUyMHZpZXd8ZW58MXx8fHwxNzc2MjY1OTc2fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+      "images": [
+        "https://images.unsplash.com/photo-1608463656552-7eef31884ab6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMHBlbnRob3VzZSUyMHZpZXd8ZW58MXx8fHwxNzc2MjY1OTc2fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        "https://images.unsplash.com/photo-1701568129402-0d4541e3dab7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3RlbCUyMHJvb2Z0b3AlMjBwb29sJTIwc3Vuc2V0fGVufDF8fHx8MTc3NjE5MzMxM3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+      ],
+      "capacity": 4,
+      "size": 120,
+      "description": "The pinnacle of luxury living with panoramic views, private terrace, and exclusive amenities.",
+      "amenities": [
+        "2 Bedrooms",
+        "Panoramic View",
+        "Private Terrace",
+        "Jacuzzi",
+        "Premium Mini Bar",
+        "Butler Service",
+        "Home Theater",
+        "High-Speed WiFi"
+      ],
+      "available": true
+    },
+    {
+      "id": "3",
+      "name": "Deluxe Room",
+      "type": "Deluxe",
+      "price": 1180,
+      "image": "https://images.unsplash.com/photo-1702675301342-cac2dc3ef15a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMGRlbHV4ZSUyMHJvb20lMjBpbnRlcmlvcnxlbnwxfHx8fDE3NzYyMjg1NDd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+      "images": [
+        "https://images.unsplash.com/photo-1702675301342-cac2dc3ef15a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3RlbCUyMGRlbHV4ZSUyMHJvb20lMjBpbnRlcmlvcnxlbnwxfHx8fDE3NzYyMjg1NDd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+      ],
+      "capacity": 2,
+      "size": 42,
+      "description": "Comfortable and stylish deluxe room with modern amenities and city views.",
+      "amenities": [
+        "Queen Bed",
+        "City View",
+        "Smart TV",
+        "Work Desk",
+        "Mini Fridge",
+        "Coffee Maker",
+        "High-Speed WiFi"
+      ],
+      "available": true
+    },
+    {
+      "id": "4",
+      "name": "Standard Room",
+      "type": "Standard",
+      "price": 760,
+      "image": "https://images.unsplash.com/photo-1774192621035-20d11389f781?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMGxvYmJ5JTIwbW9kZXJufGVufDF8fHx8MTc3NjE1ODEwNnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+      "images": [
+        "https://images.unsplash.com/photo-1774192621035-20d11389f781?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMGxvYmJ5JTIwbW9kZXJufGVufDF8fHx8MTc3NjE1ODEwNnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+      ],
+      "capacity": 2,
+      "size": 28,
+      "description": "Cozy and affordable room perfect for travelers seeking comfort and value.",
+      "amenities": [
+        "Double Bed",
+        "TV",
+        "WiFi",
+        "Air Conditioning",
+        "Private Bathroom"
+      ],
+      "available": true
+    }
+  ],
+  "bookings": [
+    {
+      "id": "B002",
+      "roomId": "2",
+      "roomName": "Penthouse Paradise",
+      "userId": "A001",
+      "userName": "Admin User",
+      "userEmail": "admin@hhotel.com",
+      "checkIn": "2026-04-18",
+      "checkOut": "2026-04-20",
+      "guests": 4,
+      "totalPrice": 7898,
+      "status": "confirmed",
+      "paymentStatus": "paid",
+      "paymentMethod": "bank_transfer",
+      "createdAt": "2026-04-08T14:30:00Z",
+      "phone": "+60 12-881 0199",
+      "specialRequests": ""
+    },
+    {
+      "id": "B003",
+      "roomId": "3",
+      "roomName": "Deluxe Room",
+      "userId": "G001",
+      "userName": "Luxury Guest",
+      "userEmail": "guest@hhotel.com",
+      "checkIn": "2026-05-01",
+      "checkOut": "2026-05-05",
+      "guests": 2,
+      "totalPrice": 5192,
+      "status": "pending",
+      "paymentStatus": "pending",
+      "paymentMethod": "bank_transfer",
+      "createdAt": "2026-04-15T09:15:00Z",
+      "phone": "+60 12-881 0100",
+      "specialRequests": "Quiet room preferred."
+    },
+    {
+      "id": "B004",
+      "roomId": "4",
+      "roomName": "Standard Room",
+      "userId": "G001",
+      "userName": "Luxury Guest",
+      "userEmail": "guest@hhotel.com",
+      "checkIn": "2026-04-22",
+      "checkOut": "2026-04-24",
+      "guests": 1,
+      "totalPrice": 1672,
+      "status": "pending",
+      "paymentStatus": "paid",
+      "paymentMethod": "cash",
+      "createdAt": "2026-04-18T16:20:00Z",
+      "phone": "+60 12-881 0777",
+      "specialRequests": "Near elevator."
+    }
+  ]
+}
