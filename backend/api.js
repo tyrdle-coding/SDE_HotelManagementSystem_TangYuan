@@ -4,19 +4,30 @@ import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import multer from 'multer';
-import {
-  createSessionToken,
-  verifySessionToken,
-} from './auth.js';
+import crypto from 'node:crypto';
+import { createClient } from '@supabase/supabase-js';
+import { createSessionToken, verifySessionToken } from './auth.js';
+
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+function verifyPassword(password, hash) {
+  return hashPassword(password) === hash;
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
-const defaultDbPath = path.join(__dirname, 'data', 'db.json');
 const distPath = path.join(rootDir, 'frontend', 'dist');
 const uploadsDir = path.join(__dirname, 'uploads');
 const port = process.env.PORT || 3001;
 const sessionCookieName = 'hotel_session';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY,
+);
 
 try {
   await fs.access(uploadsDir);
@@ -35,15 +46,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-async function readDb(dbPath) {
-  const content = await fs.readFile(dbPath, 'utf8');
-  return JSON.parse(content);
-}
-
-async function writeDb(dbPath, data) {
-  await fs.writeFile(dbPath, JSON.stringify(data, null, 2));
-}
-
 function publicUser(user) {
   return {
     id: user.id,
@@ -61,10 +63,7 @@ function parseCookies(header = '') {
     .filter(Boolean)
     .reduce((cookies, part) => {
       const separatorIndex = part.indexOf('=');
-      if (separatorIndex === -1) {
-        return cookies;
-      }
-
+      if (separatorIndex === -1) return cookies;
       const key = part.slice(0, separatorIndex).trim();
       const value = decodeURIComponent(part.slice(separatorIndex + 1).trim());
       cookies[key] = value;
@@ -96,12 +95,13 @@ function clearSessionCookie(res) {
 
 function createSessionResponse(user, res) {
   setSessionCookie(res, createSessionToken(user));
-  return {
-    user: publicUser(user),
-  };
+  return { user: publicUser(user) };
 }
 
 function isPasswordValid(user, password) {
+  if (user.password_hash || user.passwordHash) {
+    return verifyPassword(password, user.password_hash ?? user.passwordHash);
+  }
   return user.password === password;
 }
 
@@ -112,20 +112,29 @@ function calculateNights(checkIn, checkOut) {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-function buildAdminStats(db) {
-  const totalRevenue = db.bookings.reduce((sum, booking) => sum + booking.totalPrice, 0);
-  const totalRooms = db.rooms.length;
-  const availableRooms = db.rooms.filter((room) => room.available).length;
-  const occupiedRoomIds = new Set(
-    db.bookings
-      .filter((booking) => booking.status === 'confirmed' || booking.status === 'pending')
-      .map((booking) => booking.roomId),
-  );
-  const occupancyRate = db.rooms.length === 0 ? 0 : Math.round((occupiedRoomIds.size / db.rooms.length) * 100);
-  const monthlyMap = new Map();
+function isValidBookingStatus(status) {
+  return new Set(['confirmed', 'pending', 'cancelled', 'completed']).has(status);
+}
 
-  for (const booking of db.bookings) {
-    const date = new Date(booking.createdAt);
+function normalizePaymentMethod(paymentMethod) {
+  return new Set(['bank_transfer', 'cash']).has(paymentMethod) ? paymentMethod : 'bank_transfer';
+}
+
+function buildAdminStats(rooms, bookings) {
+  const totalRevenue = bookings.reduce((sum, b) => sum + Number(b.total_price), 0);
+  const totalRooms = rooms.length;
+  const availableRooms = rooms.filter((r) => r.available).length;
+  const occupiedRoomIds = new Set(
+    bookings
+      .filter((b) => b.status === 'confirmed' || b.status === 'pending')
+      .map((b) => b.room_id),
+  );
+  const occupancyRate =
+    rooms.length === 0 ? 0 : Math.round((occupiedRoomIds.size / rooms.length) * 100);
+
+  const monthlyMap = new Map();
+  for (const booking of bookings) {
+    const date = new Date(booking.created_at);
     const key = `${date.getUTCFullYear()}-${date.getUTCMonth()}`;
     if (!monthlyMap.has(key)) {
       monthlyMap.set(key, {
@@ -135,18 +144,18 @@ function buildAdminStats(db) {
       });
     }
     const item = monthlyMap.get(key);
-    item.revenue += booking.totalPrice;
+    item.revenue += Number(booking.total_price);
     item.bookings += 1;
   }
 
   const monthlyData = Array.from(monthlyMap.values()).slice(-6);
-  const recentBookings = [...db.bookings]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  const recentBookings = [...bookings]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5);
 
   return {
     totalRevenue,
-    totalBookings: db.bookings.length,
+    totalBookings: bookings.length,
     totalRooms,
     availableRooms,
     occupancyRate,
@@ -189,98 +198,35 @@ function validateRoomPayload(payload) {
     return { error: 'Room price, capacity, and size must be valid positive numbers' };
   }
 
-  if (room.images.length === 0) {
-    room.images = [room.image];
-  }
-
-  if (room.amenities.length === 0) {
-    return { error: 'At least one amenity is required' };
-  }
+  if (room.images.length === 0) room.images = [room.image];
+  if (room.amenities.length === 0) return { error: 'At least one amenity is required' };
 
   return { room };
 }
 
-function isValidBookingStatus(status) {
-  return new Set(['confirmed', 'pending', 'cancelled', 'completed']).has(status);
-}
-
-function normalizePaymentMethod(paymentMethod) {
-  return new Set(['bank_transfer', 'cash']).has(paymentMethod) ? paymentMethod : 'bank_transfer';
-}
-
-function getNextBookingId(bookings) {
-  const maxNumber = bookings.reduce((max, booking) => {
-    const match = /^B(\d+)$/.exec(String(booking.id));
-    return match ? Math.max(max, Number(match[1])) : max;
-  }, 0);
-
-  return `B${String(maxNumber + 1).padStart(3, '0')}`;
-}
-
-function normalizeBookingPaymentState(booking) {
-  if (booking.paymentStatus === 'paid' && booking.status === 'pending') {
-    booking.status = 'confirmed';
-    return true;
-  }
-
-  if (booking.status === 'confirmed' && new Date(booking.checkOut) < new Date()) {
-    booking.status = 'completed';
-    return true;
-  }
-
-  return false;
-}
-
-async function normalizeDbBookingPaymentStates(db, saveDb) {
-  let changed = false;
-
-  for (const booking of db.bookings) {
-    changed = normalizeBookingPaymentState(booking) || changed;
-  }
-
-  if (changed) {
-    await saveDb(db);
-  }
-}
-
-export function createApp(options = {}) {
-  const dbPath = options.dbPath ?? defaultDbPath;
+export function createApp() {
   const app = express();
-
-  async function loadDb() {
-    return readDb(dbPath);
-  }
-
-  async function saveDb(data) {
-    await writeDb(dbPath, data);
-  }
 
   async function attachAuth(req, _res, next) {
     const token = getSessionTokenFromRequest(req);
-    if (!token) {
-      req.auth = null;
-      next();
-      return;
-    }
+    if (!token) { req.auth = null; return next(); }
 
     const payload = verifySessionToken(token);
-    if (!payload) {
-      req.auth = null;
-      next();
-      return;
-    }
+    if (!payload) { req.auth = null; return next(); }
 
-    const db = await loadDb();
-    const user = db.users.find((item) => item.id === payload.sub && item.email === payload.email);
+    const { data: user } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', payload.sub)
+      .eq('email', payload.email)
+      .single();
+
     req.auth = user ? publicUser(user) : null;
     next();
   }
 
   function requireAuth(req, res, next) {
-    if (!req.auth) {
-      res.status(401).json({ message: 'Authentication required' });
-      return;
-    }
+    if (!req.auth) { res.status(401).json({ message: 'Authentication required' }); return; }
     next();
   }
 
@@ -295,27 +241,23 @@ export function createApp(options = {}) {
   app.use(cors({ origin: true, credentials: true }));
   app.use(express.json());
   app.use(attachAuth);
-
   app.use('/uploads', express.static(uploadsDir));
 
+  // ── Health ────────────────────────────────────────────────────────────────
   app.get('/api/health', (_req, res) => {
     const startNs = process.hrtime.bigint();
     const mem = process.memoryUsage();
     const responseTimeMs = Number(process.hrtime.bigint() - startNs) / 1e6;
-
     res.json({
       ok: true,
       timestamp: new Date().toISOString(),
       uptimeSeconds: Math.floor(process.uptime()),
-      memory: {
-        rssBytes: mem.rss,
-        heapUsedBytes: mem.heapUsed,
-        heapTotalBytes: mem.heapTotal,
-      },
+      memory: { rssBytes: mem.rss, heapUsedBytes: mem.heapUsed, heapTotalBytes: mem.heapTotal },
       responseTimeMs,
     });
   });
 
+  // ── Auth ──────────────────────────────────────────────────────────────────
   app.get('/api/auth/me', requireAuth, (req, res) => {
     res.json({ user: req.auth });
   });
@@ -330,38 +272,35 @@ export function createApp(options = {}) {
       return;
     }
 
-    const db = await loadDb();
-    const user = db.users.find((item) => item.id === req.auth.id);
+    const { data: duplicate } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .neq('id', req.auth.id)
+      .single();
 
-    if (!user) {
-      res.status(404).json({ message: 'User not found' });
-      return;
-    }
-
-    const duplicateUser = db.users.find(
-      (item) => item.id !== user.id && item.email.toLowerCase() === email,
-    );
-
-    if (duplicateUser) {
+    if (duplicate) {
       res.status(409).json({ message: 'An account with this email already exists' });
       return;
     }
 
-    user.name = name;
-    user.email = email;
-    user.phone = phone;
+    const { data: user, error } = await supabase
+      .from('users')
+      .update({ name, email, phone })
+      .eq('id', req.auth.id)
+      .select()
+      .single();
 
-    for (const booking of db.bookings) {
-      if (booking.userId === user.id) {
-        booking.userName = name;
-        booking.userEmail = email;
-        if (phone) {
-          booking.phone = phone;
-        }
-      }
+    if (error || !user) {
+      res.status(500).json({ message: error?.message ?? 'Failed to update user' });
+      return;
     }
 
-    await saveDb(db);
+    await supabase
+      .from('bookings')
+      .update({ user_name: name, user_email: email })
+      .eq('user_id', req.auth.id);
+
     res.json(createSessionResponse(user, res));
   });
 
@@ -373,10 +312,14 @@ export function createApp(options = {}) {
   app.post('/api/auth/login', async (req, res) => {
     const email = String(req.body?.email ?? '').trim().toLowerCase();
     const password = String(req.body?.password ?? '');
-    const db = await loadDb();
-    const user = db.users.find((item) => item.email.toLowerCase() === email);
 
-    if (!user || !isPasswordValid(user, password)) {
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (error || !user || !isPasswordValid(user, password)) {
       res.status(401).json({ message: 'Invalid email or password' });
       return;
     }
@@ -394,187 +337,163 @@ export function createApp(options = {}) {
       res.status(400).json({ message: 'Name, email, phone, and password are required' });
       return;
     }
-
     if (password.length < 8) {
       res.status(400).json({ message: 'Password must be at least 8 characters' });
       return;
     }
 
-    const db = await loadDb();
-    const existingUser = db.users.find((item) => item.email.toLowerCase() === email);
-    if (existingUser) {
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (existing) {
       res.status(409).json({ message: 'An account with this email already exists' });
       return;
     }
 
-    const user = {
+    const newUser = {
       id: `U${Date.now()}`,
       name,
       email,
       phone,
-      password,
+      password_hash: hashPassword(password),
       role: 'user',
     };
 
-    db.users.unshift(user);
-    await saveDb(db);
-    res.status(201).json(createSessionResponse(user, res));
+    const { error } = await supabase.from('users').insert(newUser);
+    if (error) {
+      res.status(500).json({ message: error.message });
+      return;
+    }
+
+    res.status(201).json(createSessionResponse(newUser, res));
   });
 
+  // ── Upload ────────────────────────────────────────────────────────────────
   app.post('/api/upload', requireAdmin, upload.single('image'), (req, res) => {
     if (!req.file) {
       res.status(400).json({ message: 'No file uploaded' });
       return;
     }
-    const url = `/uploads/${req.file.filename}`;
-    res.json({ url });
+    res.json({ url: `/uploads/${req.file.filename}` });
   });
 
+  // ── Rooms ─────────────────────────────────────────────────────────────────
   app.get('/api/rooms', async (_req, res) => {
-    const db = await loadDb();
-    res.json({ rooms: db.rooms });
+    const { data, error } = await supabase.from('rooms').select('*');
+    if (error) { res.status(500).json({ message: error.message }); return; }
+    res.json({ rooms: data });
   });
 
   app.get('/api/rooms/:id', async (req, res) => {
-    const db = await loadDb();
-    const room = db.rooms.find((item) => item.id === req.params.id);
-
-    if (!room) {
-      res.status(404).json({ message: 'Room not found' });
-      return;
-    }
-
-    res.json({ room });
+    const { data, error } = await supabase
+      .from('rooms').select('*').eq('id', req.params.id).single();
+    if (error || !data) { res.status(404).json({ message: 'Room not found' }); return; }
+    res.json({ room: data });
   });
 
   app.post('/api/rooms', requireAdmin, async (req, res) => {
-    const db = await loadDb();
     const validation = validateRoomPayload(req.body);
-    if (validation.error) {
-      res.status(400).json({ message: validation.error });
-      return;
-    }
+    if (validation.error) { res.status(400).json({ message: validation.error }); return; }
 
-    const room = {
-      id: String(Date.now()),
-      ...validation.room,
-    };
-
-    db.rooms.unshift(room);
-    await saveDb(db);
+    const room = { id: String(Date.now()), ...validation.room };
+    const { error } = await supabase.from('rooms').insert(room);
+    if (error) { res.status(500).json({ message: error.message }); return; }
     res.status(201).json({ room });
   });
 
   app.put('/api/rooms/:id', requireAdmin, async (req, res) => {
-    const db = await loadDb();
-    const index = db.rooms.findIndex((item) => item.id === req.params.id);
     const validation = validateRoomPayload(req.body);
+    if (validation.error) { res.status(400).json({ message: validation.error }); return; }
 
-    if (index === -1) {
-      res.status(404).json({ message: 'Room not found' });
-      return;
-    }
+    const { data: existing } = await supabase
+      .from('rooms').select('id').eq('id', req.params.id).single();
+    if (!existing) { res.status(404).json({ message: 'Room not found' }); return; }
 
-    if (validation.error) {
-      res.status(400).json({ message: validation.error });
-      return;
-    }
-
-    db.rooms[index] = {
-      id: db.rooms[index].id,
-      ...validation.room,
-    };
-
-    await saveDb(db);
-    res.json({ room: db.rooms[index] });
+    const { data, error } = await supabase
+      .from('rooms').update(validation.room).eq('id', req.params.id).select().single();
+    if (error) { res.status(500).json({ message: error.message }); return; }
+    res.json({ room: data });
   });
 
   app.delete('/api/rooms/:id', requireAdmin, async (req, res) => {
-    const db = await loadDb();
-    const room = db.rooms.find((item) => item.id === req.params.id);
+    const { data: existing } = await supabase
+      .from('rooms').select('id').eq('id', req.params.id).single();
+    if (!existing) { res.status(404).json({ message: 'Room not found' }); return; }
 
-    if (!room) {
-      res.status(404).json({ message: 'Room not found' });
-      return;
-    }
+    await supabase.from('bookings').delete().eq('room_id', req.params.id);
 
-    db.rooms = db.rooms.filter((item) => item.id !== req.params.id);
-    db.bookings = db.bookings.filter((booking) => booking.roomId !== req.params.id);
-    await saveDb(db);
+    const { error } = await supabase.from('rooms').delete().eq('id', req.params.id);
+    if (error) { res.status(500).json({ message: error.message }); return; }
     res.json({ success: true });
   });
 
+  // ── Bookings ──────────────────────────────────────────────────────────────
   app.get('/api/bookings', requireAuth, async (req, res) => {
-    const db = await loadDb();
-    await normalizeDbBookingPaymentStates(db, saveDb);
-    const { userId } = req.query;
-    const bookings = req.auth.role === 'admin'
-      ? userId
-        ? db.bookings.filter((booking) => booking.userId === userId)
-        : db.bookings
-      : db.bookings.filter((booking) => booking.userId === req.auth.id);
-    res.json({ bookings });
+    let query = supabase.from('bookings').select('*');
+
+    if (req.auth.role === 'admin') {
+      if (req.query.userId) query = query.eq('user_id', req.query.userId);
+    } else {
+      query = query.eq('user_id', req.auth.id);
+    }
+
+    const { data, error } = await query;
+    if (error) { res.status(500).json({ message: error.message }); return; }
+    res.json({ bookings: data });
   });
 
   app.post('/api/bookings', requireAuth, async (req, res) => {
-    const { roomId, userName, checkIn, checkOut, guests, phone, specialRequests, paymentMethod } = req.body ?? {};
-    const db = await loadDb();
-    const room = db.rooms.find((item) => item.id === roomId);
+    const { roomId, userName, checkIn, checkOut, guests, phone, specialRequests, paymentMethod } =
+      req.body ?? {};
 
-    if (!room) {
-      res.status(404).json({ message: 'Room not found' });
-      return;
-    }
+    const { data: room, error: roomError } = await supabase
+      .from('rooms').select('*').eq('id', roomId).single();
+    if (roomError || !room) { res.status(404).json({ message: 'Room not found' }); return; }
 
     const nights = calculateNights(checkIn, checkOut);
-    if (nights <= 0) {
-      res.status(400).json({ message: 'Check-out must be after check-in' });
-      return;
-    }
-
+    if (nights <= 0) { res.status(400).json({ message: 'Check-out must be after check-in' }); return; }
     if (!userName || !Number.isFinite(Number(guests)) || Number(guests) <= 0) {
       res.status(400).json({ message: 'Missing required booking information' });
       return;
     }
 
-    const totalPrice = Number((room.price * nights * 1.1).toFixed(2));
     const normalizedPaymentMethod = normalizePaymentMethod(paymentMethod);
     const isBankPayment = normalizedPaymentMethod === 'bank_transfer';
     const booking = {
-      id: getNextBookingId(db.bookings),
-      roomId,
-      roomName: room.name,
-      userId: req.auth.id,
-      userName: String(userName).trim(),
-      userEmail: req.auth.email,
-      checkIn,
-      checkOut,
+      id: `B${Date.now()}`,
+      room_id: roomId,
+      room_name: room.name,
+      user_id: req.auth.id,
+      user_name: String(userName).trim(),
+      user_email: req.auth.email,
+      check_in: checkIn,
+      check_out: checkOut,
       guests: Number(guests),
-      totalPrice,
+      total_price: Number((room.price * nights * 1.1).toFixed(2)),
       status: isBankPayment ? 'confirmed' : 'pending',
-      paymentStatus: isBankPayment ? 'paid' : 'pending',
-      paymentMethod: normalizedPaymentMethod,
-      createdAt: new Date().toISOString(),
+      payment_status: isBankPayment ? 'paid' : 'pending',
+      payment_method: normalizedPaymentMethod,
+      created_at: new Date().toISOString(),
       phone,
-      specialRequests,
+      special_requests: specialRequests,
     };
 
-    db.bookings.unshift(booking);
-    await saveDb(db);
+    const { error } = await supabase.from('bookings').insert(booking);
+    if (error) { res.status(500).json({ message: error.message }); return; }
     res.status(201).json({ booking });
   });
 
   app.patch('/api/bookings/:id/payment', requireAuth, async (req, res) => {
     const { paymentStatus } = req.body ?? {};
-    const db = await loadDb();
-    const booking = db.bookings.find((item) => item.id === req.params.id);
 
-    if (!booking) {
-      res.status(404).json({ message: 'Booking not found' });
-      return;
-    }
+    const { data: booking, error: fetchError } = await supabase
+      .from('bookings').select('*').eq('id', req.params.id).single();
+    if (fetchError || !booking) { res.status(404).json({ message: 'Booking not found' }); return; }
 
-    if (req.auth.role !== 'admin' && booking.userId !== req.auth.id) {
+    if (req.auth.role !== 'admin' && booking.user_id !== req.auth.id) {
       res.status(403).json({ message: 'You can only update your own booking payment' });
       return;
     }
@@ -585,48 +504,47 @@ export function createApp(options = {}) {
       return;
     }
 
-    booking.paymentStatus = paymentStatus;
-    if (paymentStatus === 'paid') {
-      booking.status = 'confirmed';
-    }
-    await saveDb(db);
-    res.json({ booking });
+    const updates = { payment_status: paymentStatus };
+    if (paymentStatus === 'paid') updates.status = 'confirmed';
+
+    const { data, error } = await supabase
+      .from('bookings').update(updates).eq('id', req.params.id).select().single();
+    if (error) { res.status(500).json({ message: error.message }); return; }
+    res.json({ booking: data });
   });
 
   app.patch('/api/bookings/:id/status', requireAdmin, async (req, res) => {
     const { status } = req.body ?? {};
-    const db = await loadDb();
-    const booking = db.bookings.find((item) => item.id === req.params.id);
-
-    if (!booking) {
-      res.status(404).json({ message: 'Booking not found' });
-      return;
-    }
 
     if (!isValidBookingStatus(status)) {
       res.status(400).json({ message: 'Invalid booking status' });
       return;
     }
 
-    booking.status = status;
-    await saveDb(db);
-    res.json({ booking });
+    const { data: existing } = await supabase
+      .from('bookings').select('id').eq('id', req.params.id).single();
+    if (!existing) { res.status(404).json({ message: 'Booking not found' }); return; }
+
+    const { data, error } = await supabase
+      .from('bookings').update({ status }).eq('id', req.params.id).select().single();
+    if (error) { res.status(500).json({ message: error.message }); return; }
+    res.json({ booking: data });
   });
 
+  // ── Admin stats ───────────────────────────────────────────────────────────
   app.get('/api/admin/stats', requireAdmin, async (_req, res) => {
-    const db = await loadDb();
-    await normalizeDbBookingPaymentStates(db, saveDb);
-    res.json({ stats: buildAdminStats(db) });
+    const [{ data: rooms }, { data: bookings }] = await Promise.all([
+      supabase.from('rooms').select('*'),
+      supabase.from('bookings').select('*'),
+    ]);
+    res.json({ stats: buildAdminStats(rooms ?? [], bookings ?? []) });
   });
 
+  // ── Serve frontend build ──────────────────────────────────────────────────
   app.use(express.static(distPath));
 
   app.get('*', async (req, res, next) => {
-    if (req.path.startsWith('/api')) {
-      next();
-      return;
-    }
-
+    if (req.path.startsWith('/api')) { next(); return; }
     try {
       await fs.access(path.join(distPath, 'index.html'));
       res.sendFile(path.join(distPath, 'index.html'));

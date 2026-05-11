@@ -1,18 +1,121 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
+import { jest, describe, expect, test, beforeEach } from '@jest/globals';
 import request from 'supertest';
-import { describe, expect, test, beforeEach, afterEach, jest } from '@jest/globals';
-import { createApp } from './api.js';
+import crypto from 'node:crypto';
 
-let tempDir;
-let dbPath;
-let app;
 jest.setTimeout(15000);
 
-/**
- * Logs in and returns the raw session cookie string, e.g. "hotel_session=<token>".
- */
+function hashPassword(p) {
+  return crypto.createHash('sha256').update(p).digest('hex');
+}
+
+// ── In-memory store (reset before each test) ──────────────────────────────────
+let db;
+
+function resetDb() {
+  db = {
+    users: [
+      {
+        id: 'U001',
+        name: 'Admin',
+        email: 'admin@hhotel.com',
+        phone: '+60 12-345 6789',
+        password_hash: hashPassword('admin123'),
+        role: 'admin',
+      },
+      {
+        id: 'G001',
+        name: 'Guest',
+        email: 'guest@gmail.com',
+        phone: '+60 16-555 0000',
+        password_hash: hashPassword('guest123'),
+        role: 'user',
+      },
+    ],
+    rooms: [
+      { id: '1', name: 'Deluxe Room', type: 'Deluxe', price: 400, image: 'https://example.com/1.jpg', images: ['https://example.com/1.jpg'], capacity: 2, size: 40, description: 'A deluxe room', amenities: ['WiFi'], available: true },
+      { id: '2', name: 'Standard Room', type: 'Standard', price: 200, image: 'https://example.com/2.jpg', images: ['https://example.com/2.jpg'], capacity: 1, size: 25, description: 'A standard room', amenities: ['WiFi'], available: true },
+      { id: '3', name: 'Suite Room', type: 'Suite', price: 800, image: 'https://example.com/3.jpg', images: ['https://example.com/3.jpg'], capacity: 3, size: 70, description: 'A nice suite', amenities: ['WiFi', 'TV'], available: true },
+      { id: '4', name: 'Penthouse', type: 'Penthouse', price: 1500, image: 'https://example.com/4.jpg', images: ['https://example.com/4.jpg'], capacity: 4, size: 120, description: 'The penthouse', amenities: ['WiFi', 'Pool'], available: true },
+    ],
+    bookings: [
+      { id: 'B001', room_id: '1', room_name: 'Deluxe Room', user_id: 'G001', user_name: 'Guest', user_email: 'guest@gmail.com', check_in: '2026-01-01', check_out: '2026-01-03', guests: 2, total_price: 880, status: 'confirmed', payment_status: 'paid', payment_method: 'bank_transfer', created_at: '2025-12-01T00:00:00.000Z', phone: '+60 16-555 0000', special_requests: '' },
+      { id: 'B002', room_id: '2', room_name: 'Standard Room', user_id: 'G001', user_name: 'Guest', user_email: 'guest@gmail.com', check_in: '2026-02-01', check_out: '2026-02-02', guests: 1, total_price: 220, status: 'pending', payment_status: 'pending', payment_method: 'cash', created_at: '2025-12-02T00:00:00.000Z', phone: '+60 16-555 0000', special_requests: '' },
+      { id: 'B003', room_id: '3', room_name: 'Suite Room', user_id: 'G001', user_name: 'Guest', user_email: 'guest@gmail.com', check_in: '2026-03-01', check_out: '2026-03-04', guests: 2, total_price: 2640, status: 'pending', payment_status: 'pending', payment_method: 'cash', created_at: '2025-12-03T00:00:00.000Z', phone: '+60 16-555 0000', special_requests: '' },
+      { id: 'B004', room_id: '1', room_name: 'Deluxe Room', user_id: 'G001', user_name: 'Guest', user_email: 'guest@gmail.com', check_in: '2026-04-01', check_out: '2026-04-05', guests: 2, total_price: 1760, status: 'confirmed', payment_status: 'paid', payment_method: 'bank_transfer', created_at: '2025-12-04T00:00:00.000Z', phone: '+60 16-555 0000', special_requests: '' },
+      { id: 'B005', room_id: '2', room_name: 'Standard Room', user_id: 'U001', user_name: 'Admin', user_email: 'admin@hhotel.com', check_in: '2026-05-01', check_out: '2026-05-02', guests: 1, total_price: 220, status: 'confirmed', payment_status: 'paid', payment_method: 'bank_transfer', created_at: '2025-12-05T00:00:00.000Z', phone: '+60 12-345 6789', special_requests: '' },
+    ],
+  };
+}
+
+// ── Supabase query builder mock ───────────────────────────────────────────────
+function createQueryBuilder(source, table) {
+  const state = {
+    operation: 'select',
+    filters: [],
+    negFilters: [],
+    isSingle: false,
+    payload: null,
+  };
+
+  function applyFilters(rows) {
+    let result = rows;
+    for (const [col, val] of state.filters) result = result.filter((r) => r[col] === val);
+    for (const [col, val] of state.negFilters) result = result.filter((r) => r[col] !== val);
+    return result;
+  }
+
+  function execute() {
+    const rows = source[table] ?? [];
+
+    if (state.operation === 'insert') {
+      const items = Array.isArray(state.payload) ? state.payload : [state.payload];
+      source[table] = [...rows, ...items];
+      return { data: null, error: null };
+    }
+
+    if (state.operation === 'delete') {
+      const toRemove = applyFilters(rows);
+      source[table] = rows.filter((r) => !toRemove.includes(r));
+      return { data: null, error: null };
+    }
+
+    const matched = applyFilters(rows);
+
+    if (state.operation === 'update') {
+      matched.forEach((r) => Object.assign(r, state.payload));
+    }
+
+    if (state.isSingle) {
+      const data = matched[0] ?? null;
+      return { data, error: data ? null : { message: 'Not found' } };
+    }
+
+    return { data: matched, error: null };
+  }
+
+  const qb = {
+    select()          { if (state.operation !== 'update') state.operation = 'select'; return qb; },
+    eq(col, val)      { state.filters.push([col, val]); return qb; },
+    neq(col, val)     { state.negFilters.push([col, val]); return qb; },
+    single()          { state.isSingle = true; return Promise.resolve(execute()); },
+    insert(payload)   { state.operation = 'insert'; state.payload = payload; return Promise.resolve(execute()); },
+    update(payload)   { state.operation = 'update'; state.payload = payload; return qb; },
+    delete()          { state.operation = 'delete'; return qb; },
+    then(resolve, reject) { return Promise.resolve(execute()).then(resolve, reject); },
+  };
+
+  return qb;
+}
+
+// ── Register mock before importing api.js ─────────────────────────────────────
+jest.unstable_mockModule('@supabase/supabase-js', () => ({
+  createClient: () => ({ from: (table) => createQueryBuilder(db, table) }),
+}));
+
+const { createApp } = await import('./api.js');
+const app = createApp();
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 async function loginAs(email, password) {
   const res = await request(app).post('/api/auth/login').send({ email, password });
   expect(res.status).toBe(200);
@@ -22,10 +125,9 @@ async function loginAs(email, password) {
     expect.arrayContaining([expect.stringContaining('hotel_session=')]),
   );
   const cookieLine = setCookieHeader.find((c) => c.startsWith('hotel_session=')) ?? '';
-  return cookieLine.split(';')[0]; // "hotel_session=<encoded-token>"
+  return cookieLine.split(';')[0];
 }
 
-/** Wraps request(app) with a pre-attached session cookie. */
 function authed(cookie) {
   return {
     get:    (url) => request(app).get(url).set('Cookie', cookie),
@@ -36,24 +138,14 @@ function authed(cookie) {
   };
 }
 
-beforeEach(async () => {
-  tempDir = await mkdtemp(path.join(os.tmpdir(), 'hotel-app-test-'));
-  dbPath = path.join(tempDir, 'db.json');
-  const sourceDb = await readFile(new URL('./data/db.json', import.meta.url), 'utf8');
-  await writeFile(dbPath, sourceDb);
-  app = createApp({ dbPath });
-});
-
-afterEach(async () => {
-  if (tempDir) {
-    await rm(tempDir, { recursive: true, force: true });
-  }
+beforeEach(() => {
+  resetDb();
 });
 
 // ─── 1. Registration ──────────────────────────────────────────────────────────
 
 describe('registration', () => {
-  test('signup creates a session immediately and stores a plain password', async () => {
+  test('signup creates a session immediately and hashes the password', async () => {
     const res = await request(app).post('/api/auth/register').send({
       name: 'Test User',
       email: 'newuser@example.com',
@@ -68,11 +160,10 @@ describe('registration', () => {
       expect.arrayContaining([expect.stringContaining('hotel_session=')]),
     );
 
-    const storedDb = JSON.parse(await readFile(dbPath, 'utf8'));
-    const storedUser = storedDb.users.find((u) => u.email === 'newuser@example.com');
+    const storedUser = db.users.find((u) => u.email === 'newuser@example.com');
     expect(storedUser.phone).toBe('+60 11-222 3333');
-    expect(storedUser.password).toBe('secret123');
-    expect(storedUser.passwordHash).toBeUndefined();
+    expect(storedUser.password_hash).toBeDefined();
+    expect(storedUser.password).toBeUndefined();
   });
 
   test('signup rejects a duplicate email', async () => {
@@ -149,13 +240,12 @@ describe('login', () => {
       expect.arrayContaining([expect.stringContaining('hotel_session=;')]),
     );
 
-    // Without a session cookie the protected endpoint rejects the request
     const meRes = await request(app).get('/api/auth/me');
     expect(meRes.status).toBe(401);
   });
 });
 
-// ─── 3. Room booking ──────────────────────────────────────────────────────────
+// ─── 3. Profile ───────────────────────────────────────────────────────────────
 
 describe('profile', () => {
   test('authenticated user can update their profile details', async () => {
@@ -174,17 +264,15 @@ describe('profile', () => {
       expect.arrayContaining([expect.stringContaining('hotel_session=')]),
     );
 
-    const storedDb = JSON.parse(await readFile(dbPath, 'utf8'));
-    const storedUser = storedDb.users.find((u) => u.id === 'G001');
+    const storedUser = db.users.find((u) => u.id === 'G001');
     expect(storedUser.name).toBe('Updated Guest');
     expect(storedUser.email).toBe('updated.guest@hhotel.com');
     expect(storedUser.phone).toBe('+60 16-555 0111');
-    expect(storedDb.bookings.filter((booking) => booking.userId === 'G001')).toEqual(
+    expect(db.bookings.filter((b) => b.user_id === 'G001')).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          userName: 'Updated Guest',
-          userEmail: 'updated.guest@hhotel.com',
-          phone: '+60 16-555 0111',
+          user_name: 'Updated Guest',
+          user_email: 'updated.guest@hhotel.com',
         }),
       ]),
     );
@@ -201,6 +289,8 @@ describe('profile', () => {
     expect(res.status).toBe(409);
   });
 });
+
+// ─── 4. Room booking ──────────────────────────────────────────────────────────
 
 describe('room booking', () => {
   test('anyone can list available rooms', async () => {
@@ -224,10 +314,10 @@ describe('room booking', () => {
     });
 
     expect(res.status).toBe(201);
-    expect(res.body.booking.roomId).toBe('1');
+    expect(res.body.booking.room_id).toBe('1');
     expect(res.body.booking.status).toBe('confirmed');
-    expect(res.body.booking.paymentStatus).toBe('paid');
-    expect(res.body.booking.totalPrice).toBeGreaterThan(0);
+    expect(res.body.booking.payment_status).toBe('paid');
+    expect(res.body.booking.total_price).toBeGreaterThan(0);
   });
 
   test('counter payment bookings stay payment-pending until admin confirms payment', async () => {
@@ -245,8 +335,8 @@ describe('room booking', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.booking.status).toBe('pending');
-    expect(res.body.booking.paymentStatus).toBe('pending');
-    expect(res.body.booking.paymentMethod).toBe('cash');
+    expect(res.body.booking.payment_status).toBe('pending');
+    expect(res.body.booking.payment_method).toBe('cash');
   });
 
   test('unauthenticated users cannot create a booking', async () => {
@@ -282,7 +372,7 @@ describe('room booking', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.bookings).toHaveLength(4);
-    expect(res.body.bookings.every((b) => b.userId === 'G001')).toBe(true);
+    expect(res.body.bookings.every((b) => b.user_id === 'G001')).toBe(true);
   });
 
   test('user can mark their own booking as paid', async () => {
@@ -290,12 +380,12 @@ describe('room booking', () => {
     const res = await authed(cookie).patch('/api/bookings/B003/payment').send({ paymentStatus: 'paid' });
 
     expect(res.status).toBe(200);
-    expect(res.body.booking.paymentStatus).toBe('paid');
+    expect(res.body.booking.payment_status).toBe('paid');
     expect(res.body.booking.status).toBe('confirmed');
   });
 });
 
-// ─── 4. Admin features ────────────────────────────────────────────────────────
+// ─── 5. Admin features ────────────────────────────────────────────────────────
 
 describe('admin features', () => {
   test('admin stats require an admin session cookie', async () => {
