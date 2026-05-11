@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { MapPin, Phone, Mail, Clock, Landmark, UtensilsCrossed, ShoppingBag, Trees, ArrowRight, MessageSquare, Globe, Sparkles } from 'lucide-react';
+import { MapPin, Phone, Mail, Landmark, UtensilsCrossed, ShoppingBag, Trees, ArrowRight, MessageSquare } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { Label } from '../../components/Label';
@@ -12,8 +12,7 @@ import { useState } from 'react';
 const contactChannels = [
   { icon: Phone, title: 'Direct Line', detail: '+60 82-288 191', kicker: '24/7 Concierge' },
   { icon: Mail, title: 'Email Inquiry', detail: 'reservations@hhotel.my', kicker: 'Response < 2h' },
-  { icon: MessageSquare, title: 'Live Chat', detail: 'Available in-app', kicker: 'Instant Support' },
-  { icon: Globe, title: 'Regional Reach', detail: 'Kuching • Kuala Lumpur • Singapore', kicker: 'Borneo Gateway' },
+  { icon: MapPin, title: 'Location', detail: 'Kuching', kicker: 'Local Stay' },
 ];
 
 export function Contact() {

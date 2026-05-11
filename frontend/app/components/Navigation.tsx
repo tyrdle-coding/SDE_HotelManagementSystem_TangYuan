@@ -78,10 +78,10 @@ export function Navigation() {
                     </Button>
                   </Link>
                 ) : null}
-                <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-secondary/50">
+                <Link to="/profile" className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-secondary/50 transition-colors hover:bg-secondary">
                   <User className="w-4 h-4" />
                   <span className="text-sm">{user.name}</span>
-                </div>
+                </Link>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -131,6 +131,15 @@ export function Navigation() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 My Bookings
+              </Link>
+            ) : null}
+            {user ? (
+              <Link
+                to="/profile"
+                className="block py-2 px-4 rounded-lg hover:bg-secondary"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Profile
               </Link>
             ) : null}
             {user ? (

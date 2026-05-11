@@ -10,7 +10,7 @@ import {
 import { HotelMark } from './HotelMark';
 
 const heroImage =
-  'https://images.unsplash.com/photo-1674382397731-0c376fbc3cc8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBob3RlbCUyMGV4dGVyaW9yJTIwYXJjaGl0ZWN0dXJlfGVufDF8fHx8MTc3NjI2NTk3OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';
+  'https://images.unsplash.com/photo-1735793872640-0b951695313c?auto=format&fit=crop&fm=jpg&q=80&w=1600';
 
 const brandLetters = 'LUXE'.split('');
 const locationLetters = 'HOTEL'.split('');
@@ -88,6 +88,7 @@ export function HotelIntroComposition() {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
+  const subtitleTop = height / 2 + (isMobile ? 82 : 104);
 
   const circleSize = interpolate(frame, [0, 44, 96, durationInFrames], [width * 0.1, width * 0.2, width * 0.25, width * 0.3]);
 
@@ -232,7 +233,7 @@ export function HotelIntroComposition() {
               style={{
                 fontSize: isMobile ? 9 : 11,
                 fontWeight: 600,
-                letterSpacing: '0.55em',
+                letterSpacing: isMobile ? '0.36em' : '0.44em',
                 textTransform: 'uppercase',
                 color: 'rgba(255,255,255,0.38)',
                 transform: `scaleX(${accentLineScale})`,
@@ -248,7 +249,9 @@ export function HotelIntroComposition() {
         <div
           style={{
             position: 'absolute',
-            bottom: 220,
+            top: subtitleTop,
+            left: 0,
+            right: 0,
             textAlign: 'center',
             opacity: subtitleOpacity,
           }}
@@ -256,11 +259,10 @@ export function HotelIntroComposition() {
             <p
               style={{
                 fontSize: 12,
-                letterSpacing: '0.42em',
+                letterSpacing: '0.34em',
                 textTransform: 'uppercase',
                 color: 'rgba(255,255,255,0.58)',
                 margin: 0,
-                marginBottom: 12,
               }}
             >
               H Hotel

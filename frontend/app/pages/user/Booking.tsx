@@ -296,7 +296,7 @@ export function Booking() {
                       }`}
                     >
                       <Globe className="w-6 h-6 mb-2" />
-                      <span className="text-xs font-bold uppercase tracking-widest">Bank Link</span>
+                      <span className="text-xs font-bold uppercase tracking-widest">Bank Payment</span>
                     </button>
                     <button
                       type="button"
@@ -308,19 +308,19 @@ export function Booking() {
                       }`}
                     >
                       <Check className="w-6 h-6 mb-2" />
-                      <span className="text-xs font-bold uppercase tracking-widest">Pay at Hotel</span>
+                      <span className="text-xs font-bold uppercase tracking-widest">Pay at Counter</span>
                     </button>
                   </div>
 
                   {formData.paymentMethod === 'bank_transfer' && (
                     <p className="text-sm text-slate-500 font-light italic p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                      Your booking will be created as pending payment so you can settle it manually with the hotel team.
+                      After submitting, this reservation is recorded as paid by bank payment.
                     </p>
                   )}
 
                   {formData.paymentMethod === 'cash' && (
                     <p className="text-sm text-slate-500 font-light italic p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                      Payment will be collected at the front desk upon arrival.
+                      Payment will be collected at the hotel counter. Admin can mark it paid after receiving payment.
                     </p>
                   )}
                 </div>

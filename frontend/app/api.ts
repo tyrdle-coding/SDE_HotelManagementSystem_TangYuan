@@ -7,6 +7,28 @@ import type {
   User,
 } from './types';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapBooking(b: any): Booking {
+  return {
+    id: b.id,
+    roomId: b.room_id,
+    roomName: b.room_name,
+    userId: b.user_id,
+    userName: b.user_name,
+    userEmail: b.user_email,
+    checkIn: b.check_in,
+    checkOut: b.check_out,
+    guests: b.guests,
+    totalPrice: b.total_price,
+    status: b.status,
+    paymentStatus: b.payment_status,
+    paymentMethod: b.payment_method,
+    createdAt: b.created_at,
+    phone: b.phone,
+    specialRequests: b.special_requests,
+  };
+}
+
 // Shared fetch helper for all frontend-to-backend API requests.
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -33,12 +55,17 @@ export const hotelApi = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-  signup: (payload: { name: string; email: string; password: string }) =>
+  signup: (payload: { name: string; email: string; phone: string; password: string }) =>
     request<AuthSession>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
   getCurrentUser: () => request<{ user: User }>('/api/auth/me'),
+  updateCurrentUser: (payload: { name: string; email: string; phone: string }) =>
+    request<AuthSession>('/api/auth/me', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
   logout: () => request<{ success: boolean }>('/api/auth/logout', { method: 'POST' }),
   getRooms: () => request<{ rooms: Room[] }>('/api/rooms'),
   getRoom: (id: string) => request<{ room: Room }>('/api/rooms/' + id),
@@ -56,9 +83,11 @@ export const hotelApi = {
     request<{ success: boolean }>('/api/rooms/' + id, {
       method: 'DELETE',
     }),
-  getBookings: (userId?: string) =>
-    request<{ bookings: Booking[] }>(userId ? '/api/bookings?userId=' + userId : '/api/bookings'),
-  createBooking: (payload: {
+  getBookings: async (userId?: string) => {
+    const data = await request<{ bookings: unknown[] }>(userId ? '/api/bookings?userId=' + userId : '/api/bookings');
+    return { bookings: data.bookings.map(mapBooking) };
+  },
+  createBooking: async (payload: {
     roomId: string;
     userName: string;
     checkIn: string;
@@ -67,22 +96,31 @@ export const hotelApi = {
     phone: string;
     specialRequests: string;
     paymentMethod: string;
-  }) =>
-    request<{ booking: Booking }>('/api/bookings', {
+  }) => {
+    const data = await request<{ booking: unknown }>('/api/bookings', {
       method: 'POST',
       body: JSON.stringify(payload),
-    }),
-  updateBookingStatus: (id: string, status: BookingStatus) =>
-    request<{ booking: Booking }>('/api/bookings/' + id + '/status', {
+    });
+    return { booking: mapBooking(data.booking) };
+  },
+  updateBookingStatus: async (id: string, status: BookingStatus) => {
+    const data = await request<{ booking: unknown }>('/api/bookings/' + id + '/status', {
       method: 'PATCH',
       body: JSON.stringify({ status }),
-    }),
-  updatePaymentStatus: (id: string, paymentStatus: string) =>
-    request<{ booking: Booking }>('/api/bookings/' + id + '/payment', {
+    });
+    return { booking: mapBooking(data.booking) };
+  },
+  updatePaymentStatus: async (id: string, paymentStatus: string) => {
+    const data = await request<{ booking: unknown }>('/api/bookings/' + id + '/payment', {
       method: 'PATCH',
       body: JSON.stringify({ paymentStatus }),
-    }),
-  getAdminStats: () => request<{ stats: AdminStats }>('/api/admin/stats'),
+    });
+    return { booking: mapBooking(data.booking) };
+  },
+  getAdminStats: async () => {
+    const data = await request<{ stats: AdminStats & { recentBookings: unknown[] } }>('/api/admin/stats');
+    return { stats: { ...data.stats, recentBookings: data.stats.recentBookings.map(mapBooking) } };
+  },
   uploadImage: (file: File) => {
     const formData = new FormData();
     formData.append('image', file);

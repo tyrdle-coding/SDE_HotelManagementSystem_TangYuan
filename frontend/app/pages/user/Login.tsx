@@ -36,25 +36,25 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      <div className="flex items-center justify-center px-4 py-24">
+    <div className="mt-16 grid min-h-[calc(100vh-4rem)] bg-white lg:grid-cols-2">
+      <div className="flex items-start justify-center px-4 py-8 lg:py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="w-full max-w-md"
         >
-          <div className="mb-8 flex items-center gap-2">
+          <div className="mb-5 flex items-center gap-2">
             <HotelMark className="h-9 w-9" />
             <span className="text-xl tracking-[0.1em] font-medium text-slate-900 uppercase">Hotel</span>
           </div>
 
-          <h1 className="mb-2 text-4xl">Welcome back</h1>
-          <p className="mb-8 text-muted-foreground">
+          <h1 className="mb-2 text-4xl leading-tight">Welcome back</h1>
+          <p className="mb-5 text-muted-foreground">
             Sign in to manage your stays and upcoming bookings
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="email" className="lowercase">
                   email
@@ -69,7 +69,7 @@ export function Login() {
                   autoCapitalize="none"
                   spellCheck={false}
                   required
-                  className="mt-2"
+                  className="mt-1.5"
                 />
               </div>
 
@@ -87,7 +87,7 @@ export function Login() {
                   autoCapitalize="none"
                   spellCheck={false}
                   required
-                  className="mt-2"
+                  className="mt-1.5"
                 />
               </div>
 
@@ -97,7 +97,7 @@ export function Login() {
               </Button>
             </form>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="mt-5 text-center text-sm text-muted-foreground">
             Need an account?{' '}
             <Link to="/signup" className="text-primary hover:underline">
               Sign up
@@ -110,19 +110,21 @@ export function Login() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
-        className="relative hidden overflow-hidden lg:block"
+        className="hidden items-start justify-center p-8 lg:flex"
       >
-        <img
-          src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMGludGVyaW9yfGVufDF8fHx8MTc3NjI2NTk3OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-          alt="H Hotel interior"
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
-        <div className="absolute bottom-12 left-12 right-12 text-white">
-          <h2 className="mb-2 text-3xl">A smoother stay starts here</h2>
-          <p className="text-lg opacity-90">
-            Access your reservations, room details, and personalized stay information in one place.
-          </p>
+        <div className="relative h-[calc(100vh-8rem)] min-h-[520px] max-h-[680px] w-full overflow-hidden rounded-lg">
+          <img
+            src="https://images.unsplash.com/photo-1603768182862-483aeb564747?auto=format&fit=crop&fm=jpg&q=80&w=1600"
+            alt="City street near the hotel"
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+          <div className="absolute bottom-10 left-10 right-10 text-white">
+            <h2 className="mb-2 text-3xl">A smoother stay starts here</h2>
+            <p className="text-lg opacity-90">
+              Access your reservations, room details, and personalized stay information in one place.
+            </p>
+          </div>
         </div>
       </motion.div>
     </div>
