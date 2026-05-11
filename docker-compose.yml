@@ -1,0 +1,61 @@
+# Local development stack.
+#
+# The `app` service uses the SAME Dockerfile that will be published to
+# Docker Hub and deployed to staging / production - only env vars differ.
+# A local Postgres instance is included so the planned db.json -> Postgres
+# migration can be developed against a real database.
+#
+# Usage:
+#   docker compose up --build           # build image and start app + db
+#   docker compose down                 # stop containers (keeps volumes)
+#   docker compose down -v              # stop and wipe the postgres volume
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: hotel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hotel
+      POSTGRES_PASSWORD: hotel_dev_password
+      POSTGRES_DB: hotel
+    ports:
+      # Exposed on the host so you can connect with psql / a GUI client
+      - "5432:5432"
+    volumes:
+      - hotel_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hotel -d hotel"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hotel-web-app:dev
+    container_name: hotel-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      AUTH_SECRET: dev-secret-change-me
+      APP_URL: http://localhost:5173
+      # Ready for the planned Postgres migration. backend/api.js does not
+      # consume this yet, but the database is available at this URL.
+      DATABASE_URL: postgres://hotel:hotel_dev_password@db:5432/hotel
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Persist uploads and the legacy JSON db across container restarts
+      - hotel_uploads:/app/backend/uploads
+      - hotel_data:/app/backend/data
+
+volumes:
+  hotel_pgdata:
+  hotel_uploads:
+  hotel_data:
