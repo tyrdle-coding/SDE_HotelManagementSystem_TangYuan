@@ -3,6 +3,8 @@ import type {
   AuthSession,
   Booking,
   BookingStatus,
+  FeedbackMessage,
+  FeedbackStatus,
   Room,
   User,
 } from './types';
@@ -26,6 +28,20 @@ function mapBooking(b: any): Booking {
     createdAt: b.created_at,
     phone: b.phone,
     specialRequests: b.special_requests,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapFeedbackMessage(message: any): FeedbackMessage {
+  return {
+    id: message.id,
+    name: message.name,
+    email: message.email,
+    phone: message.phone,
+    subject: message.subject,
+    message: message.message,
+    status: message.status ?? 'new',
+    createdAt: message.created_at,
   };
 }
 
@@ -116,6 +132,30 @@ export const hotelApi = {
       body: JSON.stringify({ paymentStatus }),
     });
     return { booking: mapBooking(data.booking) };
+  },
+  sendContactMessage: async (payload: {
+    name: string;
+    email: string;
+    phone: string;
+    subject: string;
+    message: string;
+  }) => {
+    const data = await request<{ message: unknown }>('/api/contact-messages', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return { message: mapFeedbackMessage(data.message) };
+  },
+  getFeedbackMessages: async () => {
+    const data = await request<{ messages: unknown[] }>('/api/admin/feedback');
+    return { messages: data.messages.map(mapFeedbackMessage) };
+  },
+  updateFeedbackStatus: async (id: string, status: FeedbackStatus) => {
+    const data = await request<{ message: unknown }>('/api/admin/feedback/' + id + '/status', {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+    return { message: mapFeedbackMessage(data.message) };
   },
   getAdminStats: async () => {
     const data = await request<{ stats: AdminStats & { recentBookings: unknown[] } }>('/api/admin/stats');
