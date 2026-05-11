@@ -5,6 +5,7 @@ import { Rooms } from './pages/user/Rooms';
 import { RoomDetails } from './pages/user/RoomDetails';
 import { Booking } from './pages/user/Booking';
 import { Dashboard } from './pages/user/Dashboard';
+import { Profile } from './pages/user/Profile';
 import { About } from './pages/user/About';
 import { Contact } from './pages/user/Contact';
 import { Login } from './pages/user/Login';
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
       { path: 'rooms/:id', Component: RoomDetails },
       { path: 'booking/:id', Component: Booking },
       { path: 'dashboard', Component: Dashboard },
+      { path: 'profile', Component: Profile },
       { path: 'about', Component: About },
       { path: 'contact', Component: Contact },
       { path: 'login', Component: Login },

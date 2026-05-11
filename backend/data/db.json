@@ -2,17 +2,19 @@
   "users": [
     {
       "id": "G001",
-      "name": "Luxury Guest",
-      "email": "guest@hhotel.com",
-      "password": "guest123",
-      "role": "guest"
+      "name": "Jacky Chen",
+      "email": "guest@gmail.com",
+      "phone": "+60 12-881 0100",
+      "role": "guest",
+      "password": "guest123"
     },
     {
       "id": "A001",
       "name": "Admin User",
       "email": "admin@hhotel.com",
+      "phone": "+60 12-881 0199",
       "role": "admin",
-      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"
+      "password": "admin123"
     }
   ],
   "rooms": [
@@ -113,6 +115,42 @@
   ],
   "bookings": [
     {
+      "id": "B001",
+      "roomId": "2",
+      "roomName": "Penthouse Paradise",
+      "userId": "G001",
+      "userName": "Jacky Chen",
+      "userEmail": "guest@gmail.com",
+      "checkIn": "2026-05-12",
+      "checkOut": "2026-05-15",
+      "guests": 4,
+      "totalPrice": 11847,
+      "status": "pending",
+      "paymentStatus": "pending",
+      "paymentMethod": "cash",
+      "createdAt": "2026-05-11T03:48:56.571Z",
+      "phone": "0168792501",
+      "specialRequests": ""
+    },
+    {
+      "id": "B005",
+      "roomId": "1",
+      "roomName": "Luxury Suite",
+      "userId": "G001",
+      "userName": "Jacky Chen",
+      "userEmail": "guest@gmail.com",
+      "checkIn": "2026-05-13",
+      "checkOut": "2026-05-21",
+      "guests": 1,
+      "totalPrice": 16632,
+      "status": "confirmed",
+      "paymentStatus": "paid",
+      "paymentMethod": "cash",
+      "createdAt": "2026-05-11T02:54:17.594Z",
+      "phone": "+60 12-881 0100",
+      "specialRequests": ""
+    },
+    {
       "id": "B002",
       "roomId": "2",
       "roomName": "Penthouse Paradise",
@@ -123,7 +161,7 @@
       "checkOut": "2026-04-20",
       "guests": 4,
       "totalPrice": 7898,
-      "status": "confirmed",
+      "status": "completed",
       "paymentStatus": "paid",
       "paymentMethod": "bank_transfer",
       "createdAt": "2026-04-08T14:30:00Z",
@@ -135,15 +173,15 @@
       "roomId": "3",
       "roomName": "Deluxe Room",
       "userId": "G001",
-      "userName": "Luxury Guest",
-      "userEmail": "guest@hhotel.com",
+      "userName": "Jacky Chen",
+      "userEmail": "guest@gmail.com",
       "checkIn": "2026-05-01",
       "checkOut": "2026-05-05",
       "guests": 2,
       "totalPrice": 5192,
       "status": "pending",
       "paymentStatus": "pending",
-      "paymentMethod": "bank_transfer",
+      "paymentMethod": "cash",
       "createdAt": "2026-04-15T09:15:00Z",
       "phone": "+60 12-881 0100",
       "specialRequests": "Quiet room preferred."
@@ -153,17 +191,17 @@
       "roomId": "4",
       "roomName": "Standard Room",
       "userId": "G001",
-      "userName": "Luxury Guest",
-      "userEmail": "guest@hhotel.com",
+      "userName": "Jacky Chen",
+      "userEmail": "guest@gmail.com",
       "checkIn": "2026-04-22",
       "checkOut": "2026-04-24",
       "guests": 1,
       "totalPrice": 1672,
-      "status": "pending",
+      "status": "completed",
       "paymentStatus": "paid",
-      "paymentMethod": "cash",
+      "paymentMethod": "bank_transfer",
       "createdAt": "2026-04-18T16:20:00Z",
-      "phone": "+60 12-881 0777",
+      "phone": "+60 12-881 0100",
       "specialRequests": "Near elevator."
     }
   ]

@@ -76,7 +76,32 @@ export function AdminBookings() {
     }
   };
 
+  const getPaymentMethodLabel = (method: string) =>
+    method === 'bank_transfer' ? 'Bank Payment' : 'Pay at Counter';
+
+  const getBookingCardClass = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-amber-50/70 border-amber-200';
+      case 'confirmed':
+        return 'bg-emerald-50/60 border-emerald-200';
+      case 'completed':
+        return 'bg-blue-50/60 border-blue-200';
+      case 'cancelled':
+        return 'bg-red-50/60 border-red-200';
+      default:
+        return 'bg-secondary/50 border-border';
+    }
+  };
+
   const handleStatusUpdate = async (bookingId: string, status: BookingStatus) => {
+    if (status === 'cancelled') {
+      const confirmed = window.confirm('Are you sure you want to cancel this booking?');
+      if (!confirmed) {
+        return;
+      }
+    }
+
     try {
       await hotelApi.updateBookingStatus(bookingId, status);
       toast.success('Booking status updated');
@@ -155,6 +180,13 @@ export function AdminBookings() {
             >
               Cancelled
             </Button>
+            <Button
+              variant={statusFilter === 'completed' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter('completed')}
+            >
+              Completed
+            </Button>
           </div>
         </motion.div>
 
@@ -166,12 +198,15 @@ export function AdminBookings() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05, duration: 0.6 }}
-              className="bg-secondary/50 rounded-3xl p-6 md:p-8 border border-border"
+              className={`rounded-3xl p-6 md:p-8 border ${getBookingCardClass(booking.status)}`}
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex-1">
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-5">
                     <div>
+                      <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em] text-slate-400">
+                        Booking details
+                      </p>
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-2xl font-medium">Booking #{booking.id}</h3>
                         <div className="flex gap-2">
@@ -195,7 +230,7 @@ export function AdminBookings() {
                     </div>
                   </div>
 
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     <div className="flex items-center gap-3 text-sm">
                       <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
                         <User className="w-4 h-4" />
@@ -231,32 +266,41 @@ export function AdminBookings() {
                       </div>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Payment</p>
-                        <p className="font-medium capitalize">{booking.paymentMethod.replace('_', ' ')}</p>
+                        <p className="font-medium">{getPaymentMethodLabel(booking.paymentMethod)}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="text-right flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-start gap-6">
+                <div className="flex flex-col gap-5 rounded-2xl border border-slate-100 bg-white/65 p-5 lg:w-80">
                   <div>
+                    <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em] text-slate-400">
+                      Booking value
+                    </p>
                     <p className="text-3xl font-light mb-1">{formatCurrency(booking.totalPrice)}</p>
                     <p className="text-xs font-bold uppercase tracking-widest text-slate-400">{booking.guests} guests</p>
                   </div>
-                  <div className="flex flex-wrap lg:flex-nowrap gap-2">
+                  <div>
+                    <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-slate-400">
+                      Manage booking
+                    </p>
+                    <div className="grid gap-2">
                     {booking.paymentStatus !== 'paid' && (
-                      <Button variant="outline" size="sm" className="bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100" onClick={() => handlePaymentUpdate(booking.id, 'paid')}>
-                        Mark Paid
+                      <Button variant="outline" size="sm" className="justify-center bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100" onClick={() => handlePaymentUpdate(booking.id, 'paid')}>
+                        Confirm Payment
                       </Button>
                     )}
-                    <Button variant="outline" size="sm" className="border-slate-200" onClick={() => handleStatusUpdate(booking.id, 'confirmed')}>
-                      Confirm
-                    </Button>
-                    <Button variant="outline" size="sm" className="border-slate-200" onClick={() => handleStatusUpdate(booking.id, 'completed')}>
-                      Complete
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-red-500 border-red-100 hover:bg-red-50 hover:text-red-600" onClick={() => handleStatusUpdate(booking.id, 'cancelled')}>
-                      Cancel
-                    </Button>
+                    {booking.status !== 'completed' && booking.status !== 'cancelled' ? (
+                      <Button variant="outline" size="sm" className="justify-center border-slate-200 bg-white" onClick={() => handleStatusUpdate(booking.id, 'completed')}>
+                        Complete Stay
+                      </Button>
+                    ) : null}
+                    {booking.status !== 'cancelled' && booking.status !== 'completed' ? (
+                      <Button variant="outline" size="sm" className="justify-center text-red-500 border-red-100 bg-white hover:bg-red-50 hover:text-red-600" onClick={() => handleStatusUpdate(booking.id, 'cancelled')}>
+                        Cancel Booking
+                      </Button>
+                    ) : null}
+                    </div>
                   </div>
                 </div>
               </div>

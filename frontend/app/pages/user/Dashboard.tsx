@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Users, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowRight, Calendar, CheckCircle, Clock, CreditCard, Mail, MapPin, Phone, Users, XCircle } from 'lucide-react';
 import { useAuth } from '../../components/AuthContext';
 import { Button } from '../../components/Button';
 import { hotelApi } from '../../api';
@@ -11,6 +11,7 @@ import { formatCurrency } from '../../components/utils';
 export function Dashboard() {
   const { user } = useAuth();
   const [userBookings, setUserBookings] = useState<Booking[]>([]);
+  const [openBookingId, setOpenBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -48,6 +49,39 @@ export function Dashboard() {
         return <Clock className="w-4 h-4" />;
     }
   };
+
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+      case 'refunded':
+        return 'bg-slate-500/10 text-slate-600 border-slate-500/20';
+      default:
+        return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+    }
+  };
+
+  const getBookingCardClass = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-amber-50/70 border-amber-200 hover:border-amber-300';
+      case 'confirmed':
+        return 'bg-emerald-50/60 border-emerald-200 hover:border-emerald-300';
+      case 'completed':
+        return 'bg-blue-50/60 border-blue-200 hover:border-blue-300';
+      case 'cancelled':
+        return 'bg-red-50/60 border-red-200 hover:border-red-300';
+      default:
+        return 'bg-secondary/30 border-border hover:border-primary/50';
+    }
+  };
+
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
 
   return (
     <div className="min-h-screen pt-24 pb-16">
@@ -125,7 +159,7 @@ export function Dashboard() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.6 }}
-                  className="bg-secondary/30 rounded-3xl p-6 md:p-8 border border-border hover:border-primary/50 transition-colors"
+                  className={`rounded-3xl p-6 md:p-8 border transition-colors ${getBookingCardClass(booking.status)}`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex-1">
@@ -145,21 +179,13 @@ export function Dashboard() {
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Calendar className="w-4 h-4" />
                           <span>
-                            Check-in: {new Date(booking.checkIn).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
+                            Check-in: {formatDate(booking.checkIn)}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Calendar className="w-4 h-4" />
                           <span>
-                            Check-out: {new Date(booking.checkOut).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
+                            Check-out: {formatDate(booking.checkOut)}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
@@ -175,9 +201,86 @@ export function Dashboard() {
 
                     <div className="text-right">
                       <p className="text-3xl mb-2">{formatCurrency(booking.totalPrice)}</p>
-                      <Button variant="outline">View Details</Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setOpenBookingId(openBookingId === booking.id ? null : booking.id)}
+                      >
+                        {openBookingId === booking.id ? 'Hide Details' : 'View Details'}
+                      </Button>
                     </div>
                   </div>
+
+                  {openBookingId === booking.id ? (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.35 }}
+                      className="mt-6 overflow-hidden border-t border-border pt-6"
+                    >
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <div className="rounded-2xl bg-white/70 p-5 border border-border">
+                          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-3">Stay</p>
+                          <div className="space-y-2 text-sm">
+                            <p>Check-in: {formatDate(booking.checkIn)}</p>
+                            <p>Check-out: {formatDate(booking.checkOut)}</p>
+                            <p>{booking.guests} guest{booking.guests === 1 ? '' : 's'}</p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl bg-white/70 p-5 border border-border">
+                          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-3">Guest</p>
+                          <div className="space-y-2 text-sm">
+                            <p className="flex items-center gap-2">
+                              <Users className="w-4 h-4 text-[#c19e58]" />
+                              {booking.userName}
+                            </p>
+                            <p className="flex items-center gap-2 break-all">
+                              <Mail className="w-4 h-4 shrink-0 text-[#c19e58]" />
+                              {booking.userEmail}
+                            </p>
+                            {booking.phone ? (
+                              <p className="flex items-center gap-2">
+                                <Phone className="w-4 h-4 text-[#c19e58]" />
+                                {booking.phone}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl bg-white/70 p-5 border border-border">
+                          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-3">Payment</p>
+                          <div className="space-y-3 text-sm">
+                            <p className="flex items-center gap-2 capitalize">
+                              <CreditCard className="w-4 h-4 text-[#c19e58]" />
+                              {booking.paymentMethod.replace('_', ' ')}
+                            </p>
+                            <span className={`inline-flex rounded-full border px-3 py-1 text-xs capitalize ${getPaymentStatusColor(booking.paymentStatus)}`}>
+                              {booking.paymentStatus}
+                            </span>
+                            <p className="text-lg font-medium">{formatCurrency(booking.totalPrice)}</p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl bg-white/70 p-5 border border-border">
+                          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-3">Request</p>
+                          <p className="text-sm text-muted-foreground leading-6">
+                            {booking.specialRequests?.trim() || 'No special requests added.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-sm text-muted-foreground">Created on {formatDate(booking.createdAt)}</p>
+                        <Link to={`/rooms/${booking.roomId}`}>
+                          <Button variant="outline" className="gap-2">
+                            Open Room
+                            <ArrowRight className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </motion.div>
+                  ) : null}
                 </motion.div>
               ))}
             </div>

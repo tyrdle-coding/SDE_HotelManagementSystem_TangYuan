@@ -52,14 +52,6 @@ function decodeToken(token) {
   }
 }
 
-export function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
-}
-
-export function verifyPassword(password, passwordHash) {
-  return hashPassword(password) === passwordHash;
-}
-
 export function createSessionToken(user) {
   return encodeToken(
     {

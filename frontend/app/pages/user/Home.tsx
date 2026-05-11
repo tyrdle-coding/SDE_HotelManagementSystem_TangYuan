@@ -61,7 +61,7 @@ export function Home() {
     <div className="min-h-screen overflow-x-hidden">
       <section
         ref={heroRef}
-        className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#090d12] text-white"
+        className="relative min-h-[calc(100vh+16rem)] flex items-center justify-center overflow-hidden bg-[#090d12] text-white"
       >
         <motion.div
           initial={{ scale: 1.08, opacity: 0.6 }}
@@ -163,7 +163,7 @@ export function Home() {
           />
         </div>
 
-        <motion.div style={{ y: heroContentY }} className="relative z-10 w-full px-4 md:px-8 pt-28 pb-14">
+        <motion.div style={{ y: heroContentY }} className="relative z-10 w-full px-4 md:px-8 pt-28 pb-48">
           <motion.div
             initial={{ opacity: 0, y: 42 }}
             animate={{ opacity: 1, y: 0 }}
@@ -290,7 +290,7 @@ export function Home() {
         <motion.div
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 1.5, repeat: Infinity }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+          className="absolute bottom-10 left-1/2 z-10 hidden -translate-x-1/2 xl:block"
         >
           <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center p-2">
             <motion.div

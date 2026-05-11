@@ -6,8 +6,6 @@ import { fileURLToPath } from 'node:url';
 import multer from 'multer';
 import {
   createSessionToken,
-  hashPassword,
-  verifyPassword,
   verifySessionToken,
 } from './auth.js';
 
@@ -51,6 +49,7 @@ function publicUser(user) {
     id: user.id,
     name: user.name,
     email: user.email,
+    phone: user.phone ?? '',
     role: user.role,
   };
 }
@@ -103,10 +102,6 @@ function createSessionResponse(user, res) {
 }
 
 function isPasswordValid(user, password) {
-  if (user.passwordHash) {
-    return verifyPassword(password, user.passwordHash);
-  }
-
   return user.password === password;
 }
 
@@ -213,10 +208,37 @@ function normalizePaymentMethod(paymentMethod) {
   return new Set(['bank_transfer', 'cash']).has(paymentMethod) ? paymentMethod : 'bank_transfer';
 }
 
-async function migrateLegacyUser(user, password, saveDb, db) {
-  if (!user.passwordHash) {
-    user.passwordHash = hashPassword(password);
-    delete user.password;
+function getNextBookingId(bookings) {
+  const maxNumber = bookings.reduce((max, booking) => {
+    const match = /^B(\d+)$/.exec(String(booking.id));
+    return match ? Math.max(max, Number(match[1])) : max;
+  }, 0);
+
+  return `B${String(maxNumber + 1).padStart(3, '0')}`;
+}
+
+function normalizeBookingPaymentState(booking) {
+  if (booking.paymentStatus === 'paid' && booking.status === 'pending') {
+    booking.status = 'confirmed';
+    return true;
+  }
+
+  if (booking.status === 'confirmed' && new Date(booking.checkOut) < new Date()) {
+    booking.status = 'completed';
+    return true;
+  }
+
+  return false;
+}
+
+async function normalizeDbBookingPaymentStates(db, saveDb) {
+  let changed = false;
+
+  for (const booking of db.bookings) {
+    changed = normalizeBookingPaymentState(booking) || changed;
+  }
+
+  if (changed) {
     await saveDb(db);
   }
 }
@@ -298,6 +320,51 @@ export function createApp(options = {}) {
     res.json({ user: req.auth });
   });
 
+  app.put('/api/auth/me', requireAuth, async (req, res) => {
+    const name = String(req.body?.name ?? '').trim();
+    const email = String(req.body?.email ?? '').trim().toLowerCase();
+    const phone = String(req.body?.phone ?? '').trim();
+
+    if (!name || !email) {
+      res.status(400).json({ message: 'Name and email are required' });
+      return;
+    }
+
+    const db = await loadDb();
+    const user = db.users.find((item) => item.id === req.auth.id);
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const duplicateUser = db.users.find(
+      (item) => item.id !== user.id && item.email.toLowerCase() === email,
+    );
+
+    if (duplicateUser) {
+      res.status(409).json({ message: 'An account with this email already exists' });
+      return;
+    }
+
+    user.name = name;
+    user.email = email;
+    user.phone = phone;
+
+    for (const booking of db.bookings) {
+      if (booking.userId === user.id) {
+        booking.userName = name;
+        booking.userEmail = email;
+        if (phone) {
+          booking.phone = phone;
+        }
+      }
+    }
+
+    await saveDb(db);
+    res.json(createSessionResponse(user, res));
+  });
+
   app.post('/api/auth/logout', (_req, res) => {
     clearSessionCookie(res);
     res.json({ success: true });
@@ -314,17 +381,17 @@ export function createApp(options = {}) {
       return;
     }
 
-    await migrateLegacyUser(user, password, saveDb, db);
     res.json(createSessionResponse(user, res));
   });
 
   app.post('/api/auth/register', async (req, res) => {
     const name = String(req.body?.name ?? '').trim();
     const email = String(req.body?.email ?? '').trim().toLowerCase();
+    const phone = String(req.body?.phone ?? '').trim();
     const password = String(req.body?.password ?? '');
 
-    if (!name || !email || !password) {
-      res.status(400).json({ message: 'Name, email, and password are required' });
+    if (!name || !email || !phone || !password) {
+      res.status(400).json({ message: 'Name, email, phone, and password are required' });
       return;
     }
 
@@ -344,7 +411,8 @@ export function createApp(options = {}) {
       id: `U${Date.now()}`,
       name,
       email,
-      passwordHash: hashPassword(password),
+      phone,
+      password,
       role: 'user',
     };
 
@@ -438,6 +506,7 @@ export function createApp(options = {}) {
 
   app.get('/api/bookings', requireAuth, async (req, res) => {
     const db = await loadDb();
+    await normalizeDbBookingPaymentStates(db, saveDb);
     const { userId } = req.query;
     const bookings = req.auth.role === 'admin'
       ? userId
@@ -469,8 +538,10 @@ export function createApp(options = {}) {
     }
 
     const totalPrice = Number((room.price * nights * 1.1).toFixed(2));
+    const normalizedPaymentMethod = normalizePaymentMethod(paymentMethod);
+    const isBankPayment = normalizedPaymentMethod === 'bank_transfer';
     const booking = {
-      id: `B${Date.now()}`,
+      id: getNextBookingId(db.bookings),
       roomId,
       roomName: room.name,
       userId: req.auth.id,
@@ -480,9 +551,9 @@ export function createApp(options = {}) {
       checkOut,
       guests: Number(guests),
       totalPrice,
-      status: 'pending',
-      paymentStatus: 'pending',
-      paymentMethod: normalizePaymentMethod(paymentMethod),
+      status: isBankPayment ? 'confirmed' : 'pending',
+      paymentStatus: isBankPayment ? 'paid' : 'pending',
+      paymentMethod: normalizedPaymentMethod,
       createdAt: new Date().toISOString(),
       phone,
       specialRequests,
@@ -544,6 +615,7 @@ export function createApp(options = {}) {
 
   app.get('/api/admin/stats', requireAdmin, async (_req, res) => {
     const db = await loadDb();
+    await normalizeDbBookingPaymentStates(db, saveDb);
     res.json({ stats: buildAdminStats(db) });
   });
 

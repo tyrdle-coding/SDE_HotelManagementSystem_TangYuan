@@ -33,12 +33,17 @@ export const hotelApi = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-  signup: (payload: { name: string; email: string; password: string }) =>
+  signup: (payload: { name: string; email: string; phone: string; password: string }) =>
     request<AuthSession>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
   getCurrentUser: () => request<{ user: User }>('/api/auth/me'),
+  updateCurrentUser: (payload: { name: string; email: string; phone: string }) =>
+    request<AuthSession>('/api/auth/me', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
   logout: () => request<{ success: boolean }>('/api/auth/logout', { method: 'POST' }),
   getRooms: () => request<{ rooms: Room[] }>('/api/rooms'),
   getRoom: (id: string) => request<{ room: Room }>('/api/rooms/' + id),

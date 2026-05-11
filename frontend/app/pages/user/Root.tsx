@@ -5,6 +5,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Navigation } from '../../components/Navigation';
 import { Toaster } from '../../components/Toaster';
 import { HotelIntroComposition } from '../../components/HotelIntroComposition';
+import { Footer } from '../../components/Footer';
 
 export function Root() {
   const location = useLocation();
@@ -29,6 +30,10 @@ export function Root() {
       window.removeEventListener('resize', updateDimensions);
     };
   }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -72,6 +77,7 @@ export function Root() {
           <Outlet />
         </motion.main>
       </AnimatePresence>
+      <Footer />
       <Toaster />
     </div>
   );

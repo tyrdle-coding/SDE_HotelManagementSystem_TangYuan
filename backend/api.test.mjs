@@ -30,6 +30,7 @@ function authed(cookie) {
   return {
     get:    (url) => request(app).get(url).set('Cookie', cookie),
     post:   (url) => request(app).post(url).set('Cookie', cookie),
+    put:    (url) => request(app).put(url).set('Cookie', cookie),
     patch:  (url) => request(app).patch(url).set('Cookie', cookie),
     delete: (url) => request(app).delete(url).set('Cookie', cookie),
   };
@@ -52,35 +53,40 @@ afterEach(async () => {
 // ─── 1. Registration ──────────────────────────────────────────────────────────
 
 describe('registration', () => {
-  test('signup creates a session immediately and stores a hashed password', async () => {
+  test('signup creates a session immediately and stores a plain password', async () => {
     const res = await request(app).post('/api/auth/register').send({
       name: 'Test User',
       email: 'newuser@example.com',
+      phone: '+60 11-222 3333',
       password: 'secret123',
     });
 
     expect(res.status).toBe(201);
     expect(res.body.user.email).toBe('newuser@example.com');
+    expect(res.body.user.phone).toBe('+60 11-222 3333');
     expect(res.headers['set-cookie']).toEqual(
       expect.arrayContaining([expect.stringContaining('hotel_session=')]),
     );
 
     const storedDb = JSON.parse(await readFile(dbPath, 'utf8'));
     const storedUser = storedDb.users.find((u) => u.email === 'newuser@example.com');
-    expect(storedUser.passwordHash).toEqual(expect.any(String));
-    expect(storedUser.password).toBeUndefined();
+    expect(storedUser.phone).toBe('+60 11-222 3333');
+    expect(storedUser.password).toBe('secret123');
+    expect(storedUser.passwordHash).toBeUndefined();
   });
 
   test('signup rejects a duplicate email', async () => {
     await request(app).post('/api/auth/register').send({
       name: 'First',
       email: 'dup@example.com',
+      phone: '+60 11-222 3333',
       password: 'password123',
     });
 
     const second = await request(app).post('/api/auth/register').send({
       name: 'Second',
       email: 'dup@example.com',
+      phone: '+60 11-222 4444',
       password: 'password456',
     });
 
@@ -91,6 +97,7 @@ describe('registration', () => {
     const res = await request(app).post('/api/auth/register').send({
       name: 'Short Pass',
       email: 'shortpass@example.com',
+      phone: '+60 11-222 3333',
       password: 'abc123',
     });
 
@@ -103,12 +110,12 @@ describe('registration', () => {
 describe('login', () => {
   test('login sets a session cookie', async () => {
     const res = await request(app).post('/api/auth/login').send({
-      email: 'guest@hhotel.com',
+      email: 'guest@gmail.com',
       password: 'guest123',
     });
 
     expect(res.status).toBe(200);
-    expect(res.body.user.email).toBe('guest@hhotel.com');
+    expect(res.body.user.email).toBe('guest@gmail.com');
     expect(res.headers['set-cookie']).toEqual(
       expect.arrayContaining([expect.stringContaining('hotel_session=')]),
     );
@@ -116,7 +123,7 @@ describe('login', () => {
 
   test('login rejects an incorrect password', async () => {
     const res = await request(app).post('/api/auth/login').send({
-      email: 'guest@hhotel.com',
+      email: 'guest@gmail.com',
       password: 'wrongpassword',
     });
 
@@ -133,7 +140,7 @@ describe('login', () => {
   });
 
   test('logout clears the session cookie and blocks protected endpoints afterwards', async () => {
-    const cookie = await loginAs('guest@hhotel.com', 'guest123');
+    const cookie = await loginAs('guest@gmail.com', 'guest123');
     const logoutRes = await authed(cookie).post('/api/auth/logout');
 
     expect(logoutRes.status).toBe(200);
@@ -150,6 +157,51 @@ describe('login', () => {
 
 // ─── 3. Room booking ──────────────────────────────────────────────────────────
 
+describe('profile', () => {
+  test('authenticated user can update their profile details', async () => {
+    const cookie = await loginAs('guest@gmail.com', 'guest123');
+    const res = await authed(cookie).put('/api/auth/me').send({
+      name: 'Updated Guest',
+      email: 'updated.guest@hhotel.com',
+      phone: '+60 16-555 0111',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.user.name).toBe('Updated Guest');
+    expect(res.body.user.email).toBe('updated.guest@hhotel.com');
+    expect(res.body.user.phone).toBe('+60 16-555 0111');
+    expect(res.headers['set-cookie']).toEqual(
+      expect.arrayContaining([expect.stringContaining('hotel_session=')]),
+    );
+
+    const storedDb = JSON.parse(await readFile(dbPath, 'utf8'));
+    const storedUser = storedDb.users.find((u) => u.id === 'G001');
+    expect(storedUser.name).toBe('Updated Guest');
+    expect(storedUser.email).toBe('updated.guest@hhotel.com');
+    expect(storedUser.phone).toBe('+60 16-555 0111');
+    expect(storedDb.bookings.filter((booking) => booking.userId === 'G001')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          userName: 'Updated Guest',
+          userEmail: 'updated.guest@hhotel.com',
+          phone: '+60 16-555 0111',
+        }),
+      ]),
+    );
+  });
+
+  test('profile update rejects duplicate emails', async () => {
+    const cookie = await loginAs('guest@gmail.com', 'guest123');
+    const res = await authed(cookie).put('/api/auth/me').send({
+      name: 'Jacky Chen',
+      email: 'admin@hhotel.com',
+      phone: '+60 12-881 0100',
+    });
+
+    expect(res.status).toBe(409);
+  });
+});
+
 describe('room booking', () => {
   test('anyone can list available rooms', async () => {
     const res = await request(app).get('/api/rooms');
@@ -159,10 +211,10 @@ describe('room booking', () => {
   });
 
   test('authenticated user can create a booking', async () => {
-    const cookie = await loginAs('guest@hhotel.com', 'guest123');
+    const cookie = await loginAs('guest@gmail.com', 'guest123');
     const res = await authed(cookie).post('/api/bookings').send({
       roomId: '1',
-      userName: 'Luxury Guest',
+      userName: 'Jacky Chen',
       checkIn: '2026-07-01',
       checkOut: '2026-07-03',
       guests: 2,
@@ -173,8 +225,28 @@ describe('room booking', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.booking.roomId).toBe('1');
-    expect(res.body.booking.status).toBe('pending');
+    expect(res.body.booking.status).toBe('confirmed');
+    expect(res.body.booking.paymentStatus).toBe('paid');
     expect(res.body.booking.totalPrice).toBeGreaterThan(0);
+  });
+
+  test('counter payment bookings stay payment-pending until admin confirms payment', async () => {
+    const cookie = await loginAs('guest@gmail.com', 'guest123');
+    const res = await authed(cookie).post('/api/bookings').send({
+      roomId: '1',
+      userName: 'Jacky Chen',
+      checkIn: '2026-07-05',
+      checkOut: '2026-07-06',
+      guests: 1,
+      phone: '+60 12-881 0100',
+      specialRequests: '',
+      paymentMethod: 'cash',
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.booking.status).toBe('pending');
+    expect(res.body.booking.paymentStatus).toBe('pending');
+    expect(res.body.booking.paymentMethod).toBe('cash');
   });
 
   test('unauthenticated users cannot create a booking', async () => {
@@ -191,10 +263,10 @@ describe('room booking', () => {
   });
 
   test('booking rejects a non-existent room', async () => {
-    const cookie = await loginAs('guest@hhotel.com', 'guest123');
+    const cookie = await loginAs('guest@gmail.com', 'guest123');
     const res = await authed(cookie).post('/api/bookings').send({
       roomId: '999',
-      userName: 'Luxury Guest',
+      userName: 'Jacky Chen',
       checkIn: '2026-07-01',
       checkOut: '2026-07-03',
       guests: 2,
@@ -205,16 +277,16 @@ describe('room booking', () => {
   });
 
   test('bookings endpoint only returns the signed-in user bookings for standard users', async () => {
-    const cookie = await loginAs('guest@hhotel.com', 'guest123');
+    const cookie = await loginAs('guest@gmail.com', 'guest123');
     const res = await authed(cookie).get('/api/bookings');
 
     expect(res.status).toBe(200);
-    expect(res.body.bookings).toHaveLength(2);
+    expect(res.body.bookings).toHaveLength(4);
     expect(res.body.bookings.every((b) => b.userId === 'G001')).toBe(true);
   });
 
   test('user can mark their own booking as paid', async () => {
-    const cookie = await loginAs('guest@hhotel.com', 'guest123');
+    const cookie = await loginAs('guest@gmail.com', 'guest123');
     const res = await authed(cookie).patch('/api/bookings/B003/payment').send({ paymentStatus: 'paid' });
 
     expect(res.status).toBe(200);
@@ -227,7 +299,7 @@ describe('room booking', () => {
 
 describe('admin features', () => {
   test('admin stats require an admin session cookie', async () => {
-    const guestCookie = await loginAs('guest@hhotel.com', 'guest123');
+    const guestCookie = await loginAs('guest@gmail.com', 'guest123');
     const forbiddenRes = await authed(guestCookie).get('/api/admin/stats');
     expect(forbiddenRes.status).toBe(403);
 
@@ -238,7 +310,7 @@ describe('admin features', () => {
   });
 
   test('non-admin users cannot create rooms', async () => {
-    const cookie = await loginAs('guest@hhotel.com', 'guest123');
+    const cookie = await loginAs('guest@gmail.com', 'guest123');
     const res = await authed(cookie).post('/api/rooms').send({
       name: 'Test Room',
       type: 'Suite',
@@ -279,7 +351,7 @@ describe('admin features', () => {
     const res = await authed(cookie).get('/api/bookings');
 
     expect(res.status).toBe(200);
-    expect(res.body.bookings).toHaveLength(3);
+    expect(res.body.bookings).toHaveLength(5);
   });
 
   test('admin can update a booking status', async () => {

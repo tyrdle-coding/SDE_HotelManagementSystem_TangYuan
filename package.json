@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm:dev:server\" \"npm:dev:client\"",
-    "dev:client": "vite --config frontend/vite.config.ts",
+    "dev:client": "vite --config frontend/vite.config.mjs --configLoader native",
     "dev:server": "node --watch backend/api.js",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
-    "build": "node node_modules/vite/bin/vite.js build --config frontend/vite.config.ts",
+    "build": "node node_modules/vite/bin/vite.js build --config frontend/vite.config.mjs --configLoader native",
     "start": "node backend/api.js"
   },
   "dependencies": {
