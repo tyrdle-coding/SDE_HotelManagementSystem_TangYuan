@@ -1,0 +1,33 @@
+# Dependencies and build output - reinstalled / regenerated inside the image
+node_modules
+frontend/dist
+dist
+
+# VCS and CI metadata
+.git
+.gitignore
+.github
+
+# Editor / OS noise
+.vscode
+.idea
+.DS_Store
+*.swp
+
+# Local environment files - secrets must come from compose / CI, not the image
+.env
+.env.local
+.env.*.local
+
+# Runtime artifacts that should never be baked into the image
+backend/uploads
+backend/data/db.json
+
+# Test artifacts
+coverage
+*.log
+npm-debug.log*
+
+# Docs / assets not needed at runtime
+README.md
+download.png
