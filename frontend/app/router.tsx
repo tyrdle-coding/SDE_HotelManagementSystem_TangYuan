@@ -13,7 +13,6 @@ import { Signup } from './pages/user/Signup';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminRooms } from './pages/admin/AdminRooms';
 import { AdminBookings } from './pages/admin/AdminBookings';
-import { AdminFeedback } from './pages/admin/AdminFeedback';
 import { NotFound } from './pages/user/NotFound';
 
 // Define all application routes in one place for user and admin flows.
@@ -35,7 +34,6 @@ export const router = createBrowserRouter([
       { path: 'admin', Component: AdminDashboard },
       { path: 'admin/rooms', Component: AdminRooms },
       { path: 'admin/bookings', Component: AdminBookings },
-      { path: 'admin/feedback', Component: AdminFeedback },
       { path: '*', Component: NotFound },
     ],
   },
