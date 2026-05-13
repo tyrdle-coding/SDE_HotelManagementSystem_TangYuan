@@ -5,6 +5,7 @@ on:
     branches:
       - '**'
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test-and-build:
@@ -75,6 +76,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Confirm staging deploy hook is configured
+        run: test -n "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"
+
       - name: Trigger Render staging deploy
         run: curl -fsS -X POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"
 
@@ -85,5 +89,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Confirm production deploy hook is configured
+        run: test -n "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}"
+
       - name: Trigger Render production deploy
         run: curl -fsS -X POST "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}"
