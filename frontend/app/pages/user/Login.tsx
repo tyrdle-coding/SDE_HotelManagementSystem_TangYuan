@@ -124,8 +124,7 @@ export function Login() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
-        className="hidden items-start justify-center p-8 xl:flex"
-      >
+        className="hidden items-start justify-center p-8 xl:flex">
         <div className="relative h-[calc(100vh-8rem)] min-h-[520px] max-h-[680px] w-full overflow-hidden rounded-lg">
           <img
             src="https://images.unsplash.com/photo-1603768182862-483aeb564747?auto=format&fit=crop&fm=jpg&q=80&w=1600"
