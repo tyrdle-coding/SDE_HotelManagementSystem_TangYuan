@@ -36,14 +36,28 @@ export function Login() {
   };
 
   return (
+    <div className="relative mt-16 grid min-h-[calc(100vh-4rem)] overflow-hidden bg-white xl:grid-cols-2">
+      <div className="absolute inset-0 xl:hidden">
+        <img
+          src="https://images.unsplash.com/photo-1603768182862-483aeb564747?auto=format&fit=crop&fm=jpg&q=80&w=1600"
+          alt=""
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px]" />
+      </div>
+
+      <div className="relative z-10 flex items-start justify-center px-4 py-8 sm:px-6 md:items-center xl:py-12">
+=======
     <div className="mt-16 grid min-h-[calc(100vh-4rem)] bg-white lg:grid-cols-2">
       <div className="flex items-start justify-center px-4 py-8 lg:py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="w-full max-w-md"
-        >
+          
+          className="w-full max-w-md rounded-lg bg-white/88 p-5 shadow-sm ring-1 ring-slate-200/70 backdrop-blur-sm sm:p-7 xl:bg-transparent xl:p-0 xl:shadow-none xl:ring-0 xl:backdrop-blur-0"
+
+          className="w-full max-w-md">
           <div className="mb-5 flex items-center gap-2">
             <HotelMark className="h-9 w-9" />
             <span className="text-xl tracking-[0.1em] font-medium text-slate-900 uppercase">Hotel</span>
@@ -110,7 +124,7 @@ export function Login() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
-        className="hidden items-start justify-center p-8 lg:flex"
+        className="hidden items-start justify-center p-8 xl:flex"
       >
         <div className="relative h-[calc(100vh-8rem)] min-h-[520px] max-h-[680px] w-full overflow-hidden rounded-lg">
           <img

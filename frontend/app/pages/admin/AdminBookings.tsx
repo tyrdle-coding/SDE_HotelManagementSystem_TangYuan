@@ -207,9 +207,17 @@ export function AdminBookings() {
                       <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em] text-slate-400">
                         Booking details
                       </p>
+
+                      <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between xl:justify-start">
+                        <h3 className="min-w-0 break-all text-xl font-medium sm:text-2xl">
+                          Booking #{booking.id}
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-2xl font-medium">Booking #{booking.id}</h3>
                         <div className="flex gap-2">
+
                           <span
                             className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(
                               booking.status
