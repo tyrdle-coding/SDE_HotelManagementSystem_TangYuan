@@ -140,6 +140,11 @@
 
   html {
     font-size: var(--font-size);
+    overflow-x: hidden;
+  }
+
+  body {
+    overflow-x: hidden;
   }
 
   h1 {
