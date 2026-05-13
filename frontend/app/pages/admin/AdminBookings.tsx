@@ -128,9 +128,9 @@ export function AdminBookings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-8 md:mb-12"
+          className="mb-12"
         >
-          <h1 className="text-3xl md:text-5xl mb-2">Booking Management</h1>
+          <h1 className="text-4xl md:text-5xl mb-2">Booking Management</h1>
           <p className="text-lg text-muted-foreground">View and manage all hotel bookings</p>
         </motion.div>
 
@@ -139,9 +139,9 @@ export function AdminBookings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.6 }}
-          className="flex flex-col gap-4 mb-8 xl:flex-row xl:items-center"
+          className="flex flex-col md:flex-row gap-4 mb-8"
         >
-          <div className="relative w-full xl:max-w-md">
+          <div className="relative flex-1 max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               placeholder="Search bookings..."
@@ -151,7 +151,7 @@ export function AdminBookings() {
             />
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2">
             <Button
               variant={statusFilter === 'all' ? 'default' : 'outline'}
               size="sm"
@@ -198,20 +198,18 @@ export function AdminBookings() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05, duration: 0.6 }}
-              className={`overflow-hidden rounded-3xl p-5 sm:p-6 md:p-8 border ${getBookingCardClass(booking.status)}`}
+              className={`rounded-3xl p-6 md:p-8 border ${getBookingCardClass(booking.status)}`}
             >
-              <div className="flex flex-col gap-6 xl:flex-row xl:items-stretch xl:justify-between">
-                <div className="min-w-0 flex-1">
-                  <div className="mb-5">
-                    <div className="min-w-0">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-5">
+                    <div>
                       <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em] text-slate-400">
                         Booking details
                       </p>
-                      <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between xl:justify-start">
-                        <h3 className="min-w-0 break-words text-xl font-medium sm:text-2xl">
-                          Booking #{booking.id}
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-2xl font-medium">Booking #{booking.id}</h3>
+                        <div className="flex gap-2">
                           <span
                             className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(
                               booking.status
@@ -228,65 +226,59 @@ export function AdminBookings() {
                           </span>
                         </div>
                       </div>
-                      <p className="break-words text-base font-light text-muted-foreground sm:text-lg">
-                        {booking.roomName}
-                      </p>
+                      <p className="text-lg text-muted-foreground font-light">{booking.roomName}</p>
                     </div>
                   </div>
 
-                  <div className="grid gap-5 sm:grid-cols-2 2xl:grid-cols-4">
-                    <div className="flex min-w-0 items-center gap-3 text-sm">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
                         <User className="w-4 h-4" />
                       </div>
-                      <div className="min-w-0">
+                      <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Guest</p>
-                        <p className="break-words font-medium">{booking.userName}</p>
+                        <p className="font-medium">{booking.userName}</p>
                       </div>
                     </div>
-                    <div className="flex min-w-0 items-center gap-3 text-sm">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400">
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
                         <Mail className="w-4 h-4" />
                       </div>
-                      <div className="min-w-0">
+                      <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</p>
-                        <p className="break-all font-medium">{booking.userEmail}</p>
+                        <p className="font-medium truncate max-w-[150px]">{booking.userEmail}</p>
                       </div>
                     </div>
-                    <div className="flex min-w-0 items-center gap-3 text-sm">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400">
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
                         <Calendar className="w-4 h-4" />
                       </div>
-                      <div className="min-w-0">
+                      <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Stay</p>
-                        <p className="break-words font-medium">
+                        <p className="font-medium">
                           {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                    <div className="flex min-w-0 items-center gap-3 text-sm">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400">
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
                         <CreditCard className="w-4 h-4" />
                       </div>
-                      <div className="min-w-0">
+                      <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Payment</p>
-                        <p className="break-words font-medium">{getPaymentMethodLabel(booking.paymentMethod)}</p>
+                        <p className="font-medium">{getPaymentMethodLabel(booking.paymentMethod)}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex w-full shrink-0 flex-col gap-5 rounded-2xl border border-slate-100 bg-white/65 p-5 xl:w-80">
+                <div className="flex flex-col gap-5 rounded-2xl border border-slate-100 bg-white/65 p-5 lg:w-80">
                   <div>
                     <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em] text-slate-400">
                       Booking value
                     </p>
-                    <p className="mb-1 break-words text-2xl font-light sm:text-3xl">
-                      {formatCurrency(booking.totalPrice)}
-                    </p>
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                      {booking.guests} guests
-                    </p>
+                    <p className="text-3xl font-light mb-1">{formatCurrency(booking.totalPrice)}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">{booking.guests} guests</p>
                   </div>
                   <div>
                     <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-slate-400">
