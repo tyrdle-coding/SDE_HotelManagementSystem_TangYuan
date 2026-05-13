@@ -20,7 +20,6 @@ export function Navigation() {
         { path: '/admin', label: 'Dashboard' },
         { path: '/admin/rooms', label: 'Rooms' },
         { path: '/admin/bookings', label: 'Bookings' },
-        { path: '/admin/feedback', label: 'Feedback' },
       ]
     : [
         { path: '/', label: 'Home' },

@@ -37,8 +37,11 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=builder /app/backend ./backend
 COPY --from=builder /app/frontend/dist ./frontend/dist
 
-# Supabase stores app data and uploaded room images; the container is stateless.
-RUN addgroup -S app \
+# Ensure writable directories for uploads and the legacy JSON db.
+# (Postgres will replace db.json, but the path still needs to exist
+# while the migration is in flight.)
+RUN mkdir -p /app/backend/uploads /app/backend/data \
+ && addgroup -S app \
  && adduser  -S app -G app \
  && chown -R app:app /app
 
