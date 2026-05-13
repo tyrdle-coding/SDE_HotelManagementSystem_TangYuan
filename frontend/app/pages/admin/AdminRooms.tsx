@@ -165,10 +165,10 @@ export function AdminRooms() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 selection:bg-[#c19e58]/30 pt-32 pb-32">
+    <div className="min-h-screen overflow-x-hidden bg-white text-slate-900 selection:bg-[#c19e58]/30 pt-24 pb-20 sm:pt-32 sm:pb-32">
       <div className="px-4 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-20">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 sm:gap-12 sm:mb-20">
           <Effect slide="up">
             <div className="flex items-center gap-3 mb-6">
               <span className="rounded-full border border-black/5 bg-slate-50 px-4 py-2 text-[10px] font-bold tracking-[0.3em] uppercase">
@@ -179,7 +179,7 @@ export function AdminRooms() {
                 Signature Collection
               </div>
             </div>
-            <h1 className="text-[3.5rem] md:text-[5.5rem] leading-[0.85] tracking-[-0.06em] font-light text-slate-950">
+            <h1 className="text-5xl sm:text-[3.5rem] md:text-[5.5rem] leading-[0.85] tracking-[-0.06em] font-light text-slate-950">
               Room <br />
               <span className="text-[#c19e58] italic font-serif">Collection.</span>
             </h1>
@@ -208,20 +208,20 @@ export function AdminRooms() {
         {/* Form Editor */}
         {showForm && (
           <Effect slide="down" blur="15px" className="mb-20">
-            <form onSubmit={handleSubmit} className="bg-slate-50/50 rounded-[3.5rem] p-10 md:p-16 border border-slate-100 shadow-[0_50px_120px_-30px_rgba(0,0,0,0.06)]">
-              <div className="flex items-center justify-between mb-12">
-                <div>
-                  <h2 className="text-3xl font-light text-slate-950 mb-2">
+            <form onSubmit={handleSubmit} className="overflow-hidden bg-slate-50/50 rounded-[2rem] p-5 sm:rounded-[3rem] sm:p-8 md:p-12 xl:rounded-[3.5rem] xl:p-16 border border-slate-100 shadow-[0_50px_120px_-30px_rgba(0,0,0,0.06)]">
+              <div className="mb-8 flex flex-col gap-4 sm:mb-12 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <h2 className="break-words text-2xl font-light text-slate-950 mb-2 sm:text-3xl">
                     {editingRoomId ? 'Edit Room Details' : 'Orchestrate New Room'}
                   </h2>
                   <p className="text-slate-500 font-light">Refine the sanctuary for our guests.</p>
                 </div>
-                <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-[#c19e58]">
+                <div className="break-all text-[10px] font-bold tracking-[0.3em] uppercase text-[#c19e58]">
                   {editingRoomId ? `Ref: ${editingRoomId}` : 'New Entry'}
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-10">
+              <div className="grid gap-6 md:grid-cols-2 lg:gap-10">
                 <div className="space-y-4">
                   <Label htmlFor="room-name" className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400 ml-1">Room Name</Label>
                   <Input id="room-name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="bg-white border-slate-100 focus:border-[#c19e58] h-16 rounded-2xl px-7" required />
@@ -249,9 +249,9 @@ export function AdminRooms() {
                 </div>
                 <div className="space-y-4">
                   <Label htmlFor="room-image" className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400 ml-1">Cover Image</Label>
-                  <div className="flex gap-3">
-                    <Input id="room-image" value={formData.image} onChange={(e) => setFormData({ ...formData, image: e.target.value })} className="bg-white border-slate-100 focus:border-[#c19e58] h-16 rounded-2xl px-7 flex-1" placeholder="URL or upload" required />
-                    <div className="relative">
+                  <div className="grid grid-cols-[minmax(0,1fr)_4rem] gap-3">
+                    <Input id="room-image" value={formData.image} onChange={(e) => setFormData({ ...formData, image: e.target.value })} className="min-w-0 bg-white border-slate-100 focus:border-[#c19e58] h-16 rounded-2xl px-5 sm:px-7" placeholder="URL or upload" required />
+                    <div className="relative min-w-0">
                       <input
                         type="file"
                         id="cover-upload"
@@ -279,9 +279,9 @@ export function AdminRooms() {
                 </div>
                 <div className="md:col-span-2 space-y-4">
                   <Label htmlFor="room-gallery" className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400 ml-1">Gallery</Label>
-                  <div className="flex gap-3">
-                    <Input id="room-gallery" value={formData.gallery} onChange={(e) => setFormData({ ...formData, gallery: e.target.value })} className="bg-white border-slate-100 focus:border-[#c19e58] h-16 rounded-2xl px-7 flex-1" placeholder="Comma-separated URLs or upload" />
-                    <div className="relative">
+                  <div className="grid grid-cols-[minmax(0,1fr)_4rem] gap-3">
+                    <Input id="room-gallery" value={formData.gallery} onChange={(e) => setFormData({ ...formData, gallery: e.target.value })} className="min-w-0 bg-white border-slate-100 focus:border-[#c19e58] h-16 rounded-2xl px-5 sm:px-7" placeholder="Comma-separated URLs or upload" />
+                    <div className="relative min-w-0">
                       <input
                         type="file"
                         id="gallery-upload"
@@ -326,14 +326,14 @@ export function AdminRooms() {
                 </div>
               </div>
 
-              <div className="mt-12 flex gap-4">
-                <Magnetic strength={10}>
-                  <Button type="submit" size="lg" className="h-16 rounded-2xl bg-[#c19e58] text-white hover:bg-[#a68748] px-12 shadow-lg shadow-[#c19e58]/20 transition-all duration-500">
+              <div className="mt-12 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <Magnetic strength={10} className="min-w-0">
+                  <Button type="submit" size="lg" className="h-14 w-full min-w-0 rounded-2xl bg-[#c19e58] px-4 text-xs text-white shadow-lg shadow-[#c19e58]/20 transition-all duration-500 hover:bg-[#a68748] sm:h-16 sm:px-8 sm:text-sm lg:px-12">
                     {editingRoomId ? 'Save Signature Changes' : 'Add to Collection'}
                   </Button>
                 </Magnetic>
-                <Magnetic strength={10}>
-                  <Button type="button" variant="outline" size="lg" onClick={resetForm} className="h-16 rounded-2xl border-slate-200 hover:bg-slate-50 px-10 transition-all duration-500">
+                <Magnetic strength={10} className="min-w-0">
+                  <Button type="button" variant="outline" size="lg" onClick={resetForm} className="h-14 w-full min-w-0 rounded-2xl border-slate-200 px-4 text-xs transition-all duration-500 hover:bg-slate-50 sm:h-16 sm:w-auto sm:px-8 sm:text-sm lg:px-10">
                     Cancel
                   </Button>
                 </Magnetic>
@@ -343,7 +343,7 @@ export function AdminRooms() {
         )}
 
         {/* Collection Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:gap-12">
           {filteredRooms.map((room, index) => (
             <Effect
               key={room.id}
@@ -367,37 +367,37 @@ export function AdminRooms() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               </div>
 
-              <div className="p-10">
-                <div className="flex items-start justify-between mb-8">
-                  <div>
+              <div className="p-5 sm:p-8 lg:p-10">
+                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
                     <p className="text-[9px] font-bold uppercase tracking-widest text-[#c19e58] mb-2">{room.type}</p>
-                    <h3 className="text-2xl font-light text-slate-950 leading-none">{room.name}</h3>
+                    <h3 className="break-words text-xl font-light leading-tight text-slate-950 sm:text-2xl">{room.name}</h3>
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-light text-slate-950">{formatCurrency(room.price)}</p>
+                  <div className="shrink-0 text-left sm:text-right">
+                    <p className="break-words text-xl font-light text-slate-950 sm:text-2xl">{formatCurrency(room.price)}</p>
                     <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">per night</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6 mb-10 text-slate-400">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-[#c19e58]" />
+                <div className="mb-10 flex flex-wrap items-center gap-4 text-slate-400 sm:gap-6">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Users className="w-4 h-4 shrink-0 text-[#c19e58]" />
                     <span className="text-xs font-medium uppercase tracking-widest">{room.capacity} Guests</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Maximize className="w-4 h-4 text-[#c19e58]" />
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Maximize className="w-4 h-4 shrink-0 text-[#c19e58]" />
                     <span className="text-xs font-medium uppercase tracking-widest">{room.size}m²</span>
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="grid grid-cols-[minmax(0,1fr)_3.5rem] gap-3">
                   <Button
                     variant="outline"
-                    className="flex-1 h-14 rounded-2xl border-slate-100 hover:border-[#c19e58]/50 hover:bg-slate-50 transition-all duration-500 gap-2"
+                    className="min-w-0 h-14 rounded-2xl border-slate-100 px-3 hover:border-[#c19e58]/50 hover:bg-slate-50 transition-all duration-500 gap-2"
                     onClick={() => handleEdit(room)}
                   >
-                    <Edit className="w-4 h-4 text-[#c19e58]" />
-                    <span className="text-xs font-bold uppercase tracking-widest">Edit Details</span>
+                    <Edit className="w-4 h-4 shrink-0 text-[#c19e58]" />
+                    <span className="min-w-0 truncate text-xs font-bold uppercase tracking-widest">Edit Details</span>
                   </Button>
                   <Button
                     variant="outline"

@@ -208,7 +208,7 @@ export function AdminBookings() {
                         Booking details
                       </p>
                       <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between xl:justify-start">
-                        <h3 className="min-w-0 break-words text-xl font-medium sm:text-2xl">
+                        <h3 className="min-w-0 break-all text-xl font-medium sm:text-2xl">
                           Booking #{booking.id}
                         </h3>
                         <div className="flex flex-wrap gap-2">

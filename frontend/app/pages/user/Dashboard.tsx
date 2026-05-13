@@ -194,7 +194,7 @@ export function Dashboard() {
                         </div>
                         <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
                           <MapPin className="w-4 h-4 shrink-0" />
-                          <span className="break-all">Booking ID: {booking.id}</span>
+                          <span className="min-w-0 break-all">Booking ID: {booking.id}</span>
                         </div>
                       </div>
                     </div>
@@ -220,7 +220,7 @@ export function Dashboard() {
                       className="mt-6 overflow-hidden border-t border-border pt-6"
                     >
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <div className="rounded-2xl bg-white/70 p-5 border border-border">
+                        <div className="min-w-0 rounded-2xl bg-white/70 p-4 border border-border sm:p-5">
                           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-3">Stay</p>
                           <div className="space-y-2 text-sm">
                             <p>Check-in: {formatDate(booking.checkIn)}</p>
@@ -229,41 +229,41 @@ export function Dashboard() {
                           </div>
                         </div>
 
-                        <div className="rounded-2xl bg-white/70 p-5 border border-border">
+                        <div className="min-w-0 rounded-2xl bg-white/70 p-4 border border-border sm:p-5">
                           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-3">Guest</p>
                           <div className="space-y-2 text-sm">
-                            <p className="flex items-center gap-2">
-                              <Users className="w-4 h-4 text-[#c19e58]" />
-                              {booking.userName}
+                            <p className="flex min-w-0 items-center gap-2">
+                              <Users className="w-4 h-4 shrink-0 text-[#c19e58]" />
+                              <span className="min-w-0 break-words">{booking.userName}</span>
                             </p>
-                            <p className="flex items-center gap-2 break-all">
+                            <p className="flex min-w-0 items-center gap-2 break-all">
                               <Mail className="w-4 h-4 shrink-0 text-[#c19e58]" />
-                              {booking.userEmail}
+                              <span className="min-w-0 break-all">{booking.userEmail}</span>
                             </p>
                             {booking.phone ? (
-                              <p className="flex items-center gap-2">
-                                <Phone className="w-4 h-4 text-[#c19e58]" />
-                                {booking.phone}
+                              <p className="flex min-w-0 items-center gap-2">
+                                <Phone className="w-4 h-4 shrink-0 text-[#c19e58]" />
+                                <span className="min-w-0 break-words">{booking.phone}</span>
                               </p>
                             ) : null}
                           </div>
                         </div>
 
-                        <div className="rounded-2xl bg-white/70 p-5 border border-border">
+                        <div className="min-w-0 rounded-2xl bg-white/70 p-4 border border-border sm:p-5">
                           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-3">Payment</p>
                           <div className="space-y-3 text-sm">
-                            <p className="flex items-center gap-2 capitalize">
-                              <CreditCard className="w-4 h-4 text-[#c19e58]" />
-                              {booking.paymentMethod.replace('_', ' ')}
+                            <p className="flex min-w-0 items-center gap-2 capitalize">
+                              <CreditCard className="w-4 h-4 shrink-0 text-[#c19e58]" />
+                              <span className="min-w-0 break-words">{booking.paymentMethod.replace('_', ' ')}</span>
                             </p>
                             <span className={`inline-flex rounded-full border px-3 py-1 text-xs capitalize ${getPaymentStatusColor(booking.paymentStatus)}`}>
                               {booking.paymentStatus}
                             </span>
-                            <p className="text-lg font-medium">{formatCurrency(booking.totalPrice)}</p>
+                            <p className="break-words text-lg font-medium">{formatCurrency(booking.totalPrice)}</p>
                           </div>
                         </div>
 
-                        <div className="rounded-2xl bg-white/70 p-5 border border-border">
+                        <div className="min-w-0 rounded-2xl bg-white/70 p-4 border border-border sm:p-5">
                           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-3">Request</p>
                           <p className="text-sm text-muted-foreground leading-6">
                             {booking.specialRequests?.trim() || 'No special requests added.'}
@@ -272,9 +272,9 @@ export function Dashboard() {
                       </div>
 
                       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-sm text-muted-foreground">Created on {formatDate(booking.createdAt)}</p>
-                        <Link to={`/rooms/${booking.roomId}`}>
-                          <Button variant="outline" className="gap-2">
+                        <p className="break-words text-sm text-muted-foreground">Created on {formatDate(booking.createdAt)}</p>
+                        <Link to={`/rooms/${booking.roomId}`} className="w-full sm:w-auto">
+                          <Button variant="outline" className="w-full gap-2 sm:w-auto">
                             Open Room
                             <ArrowRight className="w-4 h-4" />
                           </Button>

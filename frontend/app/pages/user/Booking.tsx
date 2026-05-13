@@ -108,7 +108,7 @@ export function Booking() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafafa] pt-24 pb-16 text-slate-900">
+    <div className="min-h-screen overflow-x-hidden bg-[#fafafa] pt-24 pb-16 text-slate-900">
       <div className="px-4 max-w-6xl mx-auto">
         <div className="mb-8">
           <Button
@@ -126,34 +126,34 @@ export function Booking() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-[3rem] md:text-[4rem] tracking-tight font-light text-slate-950 mb-3">
+          <h1 className="break-words text-4xl md:text-[4rem] tracking-tight font-light text-slate-950 mb-3">
             Secure Your <span className="italic font-serif text-[#c19e58]">Stay</span>
           </h1>
-          <p className="text-xl text-slate-500 font-light mb-12">
+          <p className="break-words text-lg text-slate-500 font-light mb-8 sm:text-xl sm:mb-12">
             Experience the energy of Kuching Waterfront hospitality
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-12">
+        <div className="grid gap-8 lg:grid-cols-3 xl:gap-12">
           <div className="lg:col-span-2 space-y-8">
             <form id="booking-form" onSubmit={handleSubmit} className="space-y-8">
               <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6 }}
-                className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm"
+                className="bg-white rounded-[2rem] p-5 sm:p-8 md:p-10 border border-slate-100 shadow-sm"
               >
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#c19e58]">
+                <div className="flex min-w-0 items-center gap-4 mb-8">
+                  <div className="w-12 h-12 shrink-0 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#c19e58]">
                     <Calendar className="w-6 h-6" />
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-medium text-slate-900">Stay Details</h2>
+                  <div className="min-w-0">
+                    <h2 className="break-words text-xl font-medium text-slate-900 sm:text-2xl">Stay Details</h2>
                     <p className="text-sm text-slate-400 uppercase tracking-widest font-bold mt-1">Select your dates</p>
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-8">
+                <div className="grid gap-5 md:grid-cols-2 md:gap-8">
                   <div className="space-y-3">
                     <Label htmlFor="checkIn" className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-1">Check-in Date</Label>
                     <Input
@@ -199,19 +199,19 @@ export function Booking() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.6 }}
-                className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm"
+                className="bg-white rounded-[2rem] p-5 sm:p-8 md:p-10 border border-slate-100 shadow-sm"
               >
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#c19e58]">
+                <div className="flex min-w-0 items-center gap-4 mb-8">
+                  <div className="w-12 h-12 shrink-0 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#c19e58]">
                     <Users className="w-6 h-6" />
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-medium text-slate-900">Guest Information</h2>
+                  <div className="min-w-0">
+                    <h2 className="break-words text-xl font-medium text-slate-900 sm:text-2xl">Guest Information</h2>
                     <p className="text-sm text-slate-400 uppercase tracking-widest font-bold mt-1">Personal details</p>
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-8">
+                <div className="grid gap-5 md:grid-cols-2 md:gap-8">
                   <div className="space-y-3">
                     <Label htmlFor="firstName" className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-1">First Name</Label>
                     <Input
@@ -272,43 +272,43 @@ export function Booking() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
-                className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm"
+                className="bg-white rounded-[2rem] p-5 sm:p-8 md:p-10 border border-slate-100 shadow-sm"
               >
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#c19e58]">
+                <div className="flex min-w-0 items-center gap-4 mb-8">
+                  <div className="w-12 h-12 shrink-0 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#c19e58]">
                     <Globe className="w-6 h-6" />
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-medium text-slate-900">Payment Method</h2>
+                  <div className="min-w-0">
+                    <h2 className="break-words text-xl font-medium text-slate-900 sm:text-2xl">Payment Method</h2>
                     <p className="text-sm text-slate-400 uppercase tracking-widest font-bold mt-1">Payment method</p>
                   </div>
                 </div>
 
                 <div className="space-y-8">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, paymentMethod: 'bank_transfer' })}
-                      className={`flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all duration-300 ${
+                      className={`flex min-w-0 flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all duration-300 sm:p-5 ${
                         formData.paymentMethod === 'bank_transfer'
                           ? 'border-[#c19e58] bg-[#c19e58]/5 text-[#c19e58]'
                           : 'border-slate-50 bg-slate-50/30 text-slate-400 hover:border-slate-200'
                       }`}
                     >
                       <Globe className="w-6 h-6 mb-2" />
-                      <span className="text-xs font-bold uppercase tracking-widest">Bank Payment</span>
+                      <span className="text-center text-[10px] font-bold uppercase tracking-widest sm:text-xs">Bank Payment</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, paymentMethod: 'cash' })}
-                      className={`flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all duration-300 ${
+                      className={`flex min-w-0 flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all duration-300 sm:p-5 ${
                         formData.paymentMethod === 'cash'
                           ? 'border-[#c19e58] bg-[#c19e58]/5 text-[#c19e58]'
                           : 'border-slate-50 bg-slate-50/30 text-slate-400 hover:border-slate-200'
                       }`}
                     >
                       <Check className="w-6 h-6 mb-2" />
-                      <span className="text-xs font-bold uppercase tracking-widest">Pay at Counter</span>
+                      <span className="text-center text-[10px] font-bold uppercase tracking-widest sm:text-xs">Pay at Counter</span>
                     </button>
                   </div>
 
@@ -334,7 +334,7 @@ export function Booking() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
-                className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden relative"
+                className="bg-white rounded-[2rem] p-5 sm:p-8 md:p-10 border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden relative"
               >
                 <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
                   <Star className="w-24 h-24 text-slate-900" />
@@ -349,9 +349,9 @@ export function Booking() {
                       alt={room.name}
                       className="w-20 h-20 rounded-2xl object-cover"
                     />
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs font-bold uppercase tracking-widest text-[#c19e58] mb-1">{room.type}</p>
-                      <h3 className="text-lg font-medium leading-tight">{room.name}</h3>
+                      <h3 className="break-words text-lg font-medium leading-tight">{room.name}</h3>
                     </div>
                   </div>
 
@@ -368,17 +368,17 @@ export function Booking() {
                 </div>
 
                 <div className="space-y-4 mb-8">
-                  <div className="flex justify-between text-slate-500 font-light">
-                    <span>{formatCurrency(room.price)} x {nights} nights</span>
-                    <span>{formatCurrency(subtotal)}</span>
+                  <div className="flex min-w-0 justify-between gap-3 text-slate-500 font-light">
+                    <span className="min-w-0 break-words">{formatCurrency(room.price)} x {nights} nights</span>
+                    <span className="shrink-0">{formatCurrency(subtotal)}</span>
                   </div>
-                  <div className="flex justify-between text-slate-500 font-light">
-                    <span>Occupancy tax (10%)</span>
-                    <span>{formatCurrency(tax)}</span>
+                  <div className="flex min-w-0 justify-between gap-3 text-slate-500 font-light">
+                    <span className="min-w-0 break-words">Occupancy tax (10%)</span>
+                    <span className="shrink-0">{formatCurrency(tax)}</span>
                   </div>
-                  <div className="flex justify-between text-xl font-medium text-slate-950 pt-4 border-t border-slate-100">
+                  <div className="flex min-w-0 justify-between gap-3 text-lg font-medium text-slate-950 pt-4 border-t border-slate-100 sm:text-xl">
                     <span>Total Amount</span>
-                    <span className="text-[#c19e58]">{formatCurrency(total)}</span>
+                    <span className="break-words text-right text-[#c19e58]">{formatCurrency(total)}</span>
                   </div>
                 </div>
 
@@ -388,7 +388,7 @@ export function Booking() {
                     type="submit"
                     size="lg"
                     disabled={submitting}
-                    className="w-full h-16 rounded-2xl bg-[#c19e58] text-white hover:bg-[#a68748] text-lg font-medium group transition-all duration-500 shadow-lg shadow-[#c19e58]/20 disabled:opacity-50"
+                    className="w-full h-14 rounded-2xl bg-[#c19e58] text-sm text-white hover:bg-[#a68748] font-medium group transition-all duration-500 shadow-lg shadow-[#c19e58]/20 disabled:opacity-50 sm:h-16 sm:text-lg"
                   >
                     {submitting ? 'Orchestrating...' : 'Complete Reservation'}
                   </Button>
