@@ -5,6 +5,7 @@ on:
     branches:
       - '**'
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test-and-build:
@@ -66,3 +67,30 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/hotel-web-app:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy staging to Render
+    needs: docker-publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Confirm staging deploy hook is configured
+        run: test -n "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"
+
+      - name: Trigger Render staging deploy
+        run: curl -fsS -X POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"
+
+  deploy-production:
+    name: Deploy production to Render
+    needs: docker-publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Confirm production deploy hook is configured
+        run: test -n "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}"
+
+      - name: Trigger Render production deploy
+        run: curl -fsS -X POST "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}"
+
