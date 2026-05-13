@@ -16,26 +16,35 @@ function verifyPassword(password, hash) {
   return hashPassword(password) === hash;
 }
 
-function normalizePhone(phone) {
-  const value = String(phone ?? '').trim();
-  if (!value) return '';
-  return value.startsWith('+') ? value : `+${value}`;
-}
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const distPath = path.join(rootDir, 'frontend', 'dist');
+const uploadsDir = path.join(__dirname, 'uploads');
 const port = process.env.PORT || 3001;
 const sessionCookieName = 'hotel_session';
-const storageBucket = process.env.SUPABASE_STORAGE_BUCKET || 'room-images';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY,
 );
 
-const upload = multer({ storage: multer.memoryStorage() });
+try {
+  await fs.access(uploadsDir);
+} catch {
+  await fs.mkdir(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
 
 function publicUser(user) {
   return {
@@ -195,19 +204,6 @@ function validateRoomPayload(payload) {
   return { room };
 }
 
-function publicFeedbackMessage(message) {
-  return {
-    id: message.id,
-    name: message.name,
-    email: message.email,
-    phone: message.phone,
-    subject: message.subject,
-    message: message.message,
-    status: message.status ?? 'new',
-    created_at: message.created_at,
-  };
-}
-
 export function createApp() {
   const app = express();
 
@@ -245,6 +241,7 @@ export function createApp() {
   app.use(cors({ origin: true, credentials: true }));
   app.use(express.json());
   app.use(attachAuth);
+  app.use('/uploads', express.static(uploadsDir));
 
   // ── Health ────────────────────────────────────────────────────────────────
   app.get('/api/health', (_req, res) => {
@@ -268,7 +265,7 @@ export function createApp() {
   app.put('/api/auth/me', requireAuth, async (req, res) => {
     const name = String(req.body?.name ?? '').trim();
     const email = String(req.body?.email ?? '').trim().toLowerCase();
-    const phone = normalizePhone(req.body?.phone);
+    const phone = String(req.body?.phone ?? '').trim();
 
     if (!name || !email) {
       res.status(400).json({ message: 'Name and email are required' });
@@ -333,7 +330,7 @@ export function createApp() {
   app.post('/api/auth/register', async (req, res) => {
     const name = String(req.body?.name ?? '').trim();
     const email = String(req.body?.email ?? '').trim().toLowerCase();
-    const phone = normalizePhone(req.body?.phone);
+    const phone = String(req.body?.phone ?? '').trim();
     const password = String(req.body?.password ?? '');
 
     if (!name || !email || !phone || !password) {
@@ -375,86 +372,15 @@ export function createApp() {
   });
 
   // ── Upload ────────────────────────────────────────────────────────────────
-  app.post('/api/upload', requireAdmin, upload.single('image'), async (req, res) => {
+  app.post('/api/upload', requireAdmin, upload.single('image'), (req, res) => {
     if (!req.file) {
       res.status(400).json({ message: 'No file uploaded' });
       return;
     }
-
-    const extension = path.extname(req.file.originalname) || '.jpg';
-    const filePath = `rooms/${Date.now()}-${crypto.randomUUID()}${extension}`;
-    const { error } = await supabase.storage
-      .from(storageBucket)
-      .upload(filePath, req.file.buffer, {
-        contentType: req.file.mimetype,
-        upsert: false,
-      });
-
-    if (error) {
-      res.status(500).json({ message: error.message });
-      return;
-    }
-
-    const { data } = supabase.storage.from(storageBucket).getPublicUrl(filePath);
-    res.json({ url: data.publicUrl });
+    res.json({ url: `/uploads/${req.file.filename}` });
   });
 
   // ── Rooms ─────────────────────────────────────────────────────────────────
-  // Contact / feedback
-  app.post('/api/contact-messages', async (req, res) => {
-    const name = String(req.body?.name ?? '').trim();
-    const email = String(req.body?.email ?? '').trim().toLowerCase();
-    const phone = normalizePhone(req.body?.phone);
-    const subject = String(req.body?.subject ?? '').trim();
-    const message = String(req.body?.message ?? '').trim();
-
-    if (!name || !email || !phone || !subject || !message) {
-      res.status(400).json({ message: 'Name, email, phone, inquiry type, and message are required' });
-      return;
-    }
-
-    const feedback = {
-      id: `M${Date.now()}`,
-      name,
-      email,
-      phone,
-      subject,
-      message,
-      status: 'new',
-      created_at: new Date().toISOString(),
-    };
-
-    const { error } = await supabase.from('feedback_messages').insert(feedback);
-    if (error) { res.status(500).json({ message: error.message }); return; }
-    res.status(201).json({ message: publicFeedbackMessage(feedback) });
-  });
-
-  app.get('/api/admin/feedback', requireAdmin, async (_req, res) => {
-    const { data, error } = await supabase.from('feedback_messages').select('*');
-    if (error) { res.status(500).json({ message: error.message }); return; }
-    const messages = [...(data ?? [])]
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .map(publicFeedbackMessage);
-    res.json({ messages });
-  });
-
-  app.patch('/api/admin/feedback/:id/status', requireAdmin, async (req, res) => {
-    const status = String(req.body?.status ?? '').trim();
-    if (!new Set(['new', 'read', 'resolved']).has(status)) {
-      res.status(400).json({ message: 'Invalid feedback status' });
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('feedback_messages')
-      .update({ status })
-      .eq('id', req.params.id)
-      .select()
-      .single();
-    if (error || !data) { res.status(404).json({ message: 'Feedback message not found' }); return; }
-    res.json({ message: publicFeedbackMessage(data) });
-  });
-
   app.get('/api/rooms', async (_req, res) => {
     const { data, error } = await supabase.from('rooms').select('*');
     if (error) { res.status(500).json({ message: error.message }); return; }
@@ -551,7 +477,7 @@ export function createApp() {
       payment_status: isBankPayment ? 'paid' : 'pending',
       payment_method: normalizedPaymentMethod,
       created_at: new Date().toISOString(),
-      phone: normalizePhone(phone),
+      phone,
       special_requests: specialRequests,
     };
 

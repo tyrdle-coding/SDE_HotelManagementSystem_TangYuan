@@ -44,9 +44,6 @@ function resetDb() {
       { id: 'B004', room_id: '1', room_name: 'Deluxe Room', user_id: 'G001', user_name: 'Guest', user_email: 'guest@gmail.com', check_in: '2026-04-01', check_out: '2026-04-05', guests: 2, total_price: 1760, status: 'confirmed', payment_status: 'paid', payment_method: 'bank_transfer', created_at: '2025-12-04T00:00:00.000Z', phone: '+60 16-555 0000', special_requests: '' },
       { id: 'B005', room_id: '2', room_name: 'Standard Room', user_id: 'U001', user_name: 'Admin', user_email: 'admin@hhotel.com', check_in: '2026-05-01', check_out: '2026-05-02', guests: 1, total_price: 220, status: 'confirmed', payment_status: 'paid', payment_method: 'bank_transfer', created_at: '2025-12-05T00:00:00.000Z', phone: '+60 12-345 6789', special_requests: '' },
     ],
-    feedback_messages: [
-      { id: 'M001', name: 'Luxury Guest', email: 'guest@hhotel.com', phone: '+60 12-345 6789', subject: 'Private Stay', message: 'Do you have suite availability?', status: 'new', created_at: '2025-12-06T00:00:00.000Z' },
-    ],
   };
 }
 
@@ -463,42 +460,5 @@ describe('admin features', () => {
 
     const roomsRes = await request(app).get('/api/rooms');
     expect(roomsRes.body.rooms.find((r) => r.id === '4')).toBeUndefined();
-  });
-
-  test('contact page inquiries are visible to admins as feedback', async () => {
-    const contactRes = await request(app).post('/api/contact-messages').send({
-      name: 'Event Planner',
-      email: 'planner@example.com',
-      phone: '+60 12-345 6789',
-      subject: 'Event Planning',
-      message: 'Can I host a private dinner for 20 guests?',
-    });
-
-    expect(contactRes.status).toBe(201);
-    expect(contactRes.body.message.status).toBe('new');
-
-    const guestCookie = await loginAs('guest@gmail.com', 'guest123');
-    const forbiddenRes = await authed(guestCookie).get('/api/admin/feedback');
-    expect(forbiddenRes.status).toBe(403);
-
-    const adminCookie = await loginAs('admin@hhotel.com', 'admin123');
-    const adminRes = await authed(adminCookie).get('/api/admin/feedback');
-    expect(adminRes.status).toBe(200);
-    expect(adminRes.body.messages).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          email: 'planner@example.com',
-          subject: 'Event Planning',
-        }),
-      ]),
-    );
-  });
-
-  test('admin can update feedback status', async () => {
-    const adminCookie = await loginAs('admin@hhotel.com', 'admin123');
-    const res = await authed(adminCookie).patch('/api/admin/feedback/M001/status').send({ status: 'resolved' });
-
-    expect(res.status).toBe(200);
-    expect(res.body.message.status).toBe('resolved');
   });
 });
