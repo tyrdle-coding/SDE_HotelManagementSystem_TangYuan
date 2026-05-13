@@ -9,7 +9,7 @@
     "dev:server": "node --env-file=.env --watch backend/api.js",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "build": "node node_modules/vite/bin/vite.js build --config frontend/vite.config.mjs --configLoader native",
-    "start": "node --env-file=.env backend/api.js"
+    "start": "node backend/api.js"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",

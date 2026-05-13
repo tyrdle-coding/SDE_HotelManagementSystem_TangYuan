@@ -54,20 +54,29 @@ export function Signup() {
   };
 
   return (
-    <div className="mt-16 grid min-h-[calc(100vh-4rem)] bg-white lg:grid-cols-2">
-      <div className="flex items-start justify-center px-4 py-6 lg:py-8">
+    <div className="relative mt-16 grid min-h-[calc(100vh-4rem)] overflow-hidden bg-white lg:grid-cols-2">
+      <div className="absolute inset-0 lg:hidden">
+        <img
+          src="https://images.unsplash.com/photo-1762774364978-4157c7ecf35f?auto=format&fit=crop&fm=jpg&q=80&w=1600"
+          alt=""
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-white/84 backdrop-blur-[1px]" />
+      </div>
+
+      <div className="relative z-10 flex items-start justify-center px-4 py-6 sm:px-6 md:items-center lg:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="w-full max-w-2xl"
+          className="w-full max-w-2xl rounded-lg bg-white/90 p-5 shadow-sm ring-1 ring-slate-200/70 backdrop-blur-sm sm:p-7 lg:bg-transparent lg:p-0 lg:shadow-none lg:ring-0 lg:backdrop-blur-0"
         >
           <div className="mb-4 flex items-center gap-2">
             <Hotel className="h-7 w-7 text-primary" />
             <span className="text-xl tracking-tight">H HOTEL</span>
           </div>
 
-          <h1 className="mb-1 text-3xl leading-tight">Create Account</h1>
+          <h1 className="mb-1 text-3xl leading-tight sm:text-4xl">Create Account</h1>
           <p className="mb-4 text-muted-foreground">
             Sign up to book rooms and manage your stays
           </p>

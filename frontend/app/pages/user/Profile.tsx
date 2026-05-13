@@ -37,6 +37,8 @@ export function Profile() {
     return <Navigate to="/login" replace />;
   }
 
+  const isAdmin = user.role === 'admin';
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
@@ -63,16 +65,18 @@ export function Profile() {
         >
           <div>
             <p className="section-kicker mb-4 text-[#8a6d31]">Account center</p>
-            <h1 className="text-4xl md:text-6xl tracking-[-0.045em]">Guest profile</h1>
+            <h1 className="text-4xl md:text-6xl tracking-[-0.045em]">Account profile</h1>
             <p className="mt-3 max-w-2xl text-muted-foreground">
-              Manage the contact details used for reservations, arrival updates, and concierge follow-up.
+              Manage the contact details used for account access, arrival updates, and concierge follow-up.
             </p>
           </div>
-          <Link to="/dashboard">
-            <Button variant="outline" className="bg-white">
-              View My Bookings
-            </Button>
-          </Link>
+          {!isAdmin ? (
+            <Link to="/dashboard">
+              <Button variant="outline" className="bg-white">
+                View My Bookings
+              </Button>
+            </Link>
+          ) : null}
         </motion.div>
 
         <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr]">
@@ -110,7 +114,7 @@ export function Profile() {
                 </div>
                 <div>
                   <h2 className="text-2xl tracking-[-0.03em]">Personal information</h2>
-                  <p className="text-sm text-muted-foreground">These details appear on your booking records.</p>
+                  <p className="text-sm text-muted-foreground">These details appear on your account records.</p>
                 </div>
               </div>
             </div>
@@ -162,7 +166,9 @@ export function Profile() {
             </div>
 
             <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-muted-foreground">Changes are saved to your account and linked booking records.</p>
+              <p className="text-xs text-muted-foreground">
+                Changes are saved to your account{isAdmin ? '.' : ' and linked booking records.'}
+              </p>
               <Button type="submit" disabled={submitting} className="min-w-36">
                 {submitting ? 'Saving...' : 'Save Profile'}
               </Button>

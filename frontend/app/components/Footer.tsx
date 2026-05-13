@@ -14,6 +14,7 @@ const adminLinks = [
   { to: '/admin', label: 'Dashboard' },
   { to: '/admin/rooms', label: 'Rooms' },
   { to: '/admin/bookings', label: 'Bookings' },
+  { to: '/admin/feedback', label: 'Feedback' },
 ];
 
 export function Footer() {

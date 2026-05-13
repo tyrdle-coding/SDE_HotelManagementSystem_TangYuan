@@ -49,6 +49,19 @@ export interface AuthSession {
   user: User;
 }
 
+export type FeedbackStatus = 'new' | 'read' | 'resolved';
+
+export interface FeedbackMessage {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+  status: FeedbackStatus;
+  createdAt: string;
+}
+
 export interface AdminStats {
   totalRevenue: number;
   totalBookings: number;
