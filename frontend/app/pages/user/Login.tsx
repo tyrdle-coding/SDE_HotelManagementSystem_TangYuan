@@ -47,7 +47,7 @@ export function Login() {
       </div>
 
       <div className="relative z-10 flex items-start justify-center px-4 py-8 sm:px-6 md:items-center xl:py-12">
-=======
+
     <div className="mt-16 grid min-h-[calc(100vh-4rem)] bg-white lg:grid-cols-2">
       <div className="flex items-start justify-center px-4 py-8 lg:py-12">
         <motion.div
