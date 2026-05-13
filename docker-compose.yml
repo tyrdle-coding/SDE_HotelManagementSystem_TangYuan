@@ -42,7 +42,6 @@ services:
       PORT: 3001
       AUTH_SECRET: dev-secret-change-me
       APP_URL: http://localhost:5173
-      SUPABASE_STORAGE_BUCKET: room-images
       # Ready for the planned Postgres migration. backend/api.js does not
       # consume this yet, but the database is available at this URL.
       DATABASE_URL: postgres://hotel:hotel_dev_password@db:5432/hotel
@@ -51,6 +50,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      # Persist uploads and the legacy JSON db across container restarts
+      - hotel_uploads:/app/backend/uploads
+      - hotel_data:/app/backend/data
 
 volumes:
   hotel_pgdata:
+  hotel_uploads:
+  hotel_data:

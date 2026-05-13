@@ -76,7 +76,7 @@ export function Signup() {
             <span className="text-xl tracking-tight">H HOTEL</span>
           </div>
 
-          <h1 className="mb-1 text-3xl leading-tight sm:text-4xl">Create Account</h1>
+          <h1 className="mb-1 text-3xl leading-tight">Create Account</h1>
           <p className="mb-4 text-muted-foreground">
             Sign up to book rooms and manage your stays
           </p>

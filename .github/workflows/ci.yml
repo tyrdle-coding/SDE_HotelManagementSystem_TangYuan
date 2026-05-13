@@ -12,11 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PORT: 3001
-      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      AUTH_SECRET: ci-test-secret
       APP_URL: http://localhost:5173
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-      SUPABASE_STORAGE_BUCKET: room-images
 
     steps:
       - name: Check out repository
@@ -94,3 +93,4 @@ jobs:
 
       - name: Trigger Render production deploy
         run: curl -fsS -X POST "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}"
+
