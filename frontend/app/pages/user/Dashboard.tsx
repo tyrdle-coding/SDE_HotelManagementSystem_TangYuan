@@ -90,9 +90,9 @@ export function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-12"
+          className="mb-8 md:mb-12"
         >
-          <h1 className="text-4xl md:text-5xl mb-2">Welcome back, {user?.name}</h1>
+          <h1 className="break-words text-3xl md:text-5xl mb-2">Welcome back, {user?.name}</h1>
           <p className="text-lg text-muted-foreground">Manage your bookings and reservations</p>
         </motion.div>
 
@@ -159,14 +159,14 @@ export function Dashboard() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.6 }}
-                  className={`rounded-3xl p-6 md:p-8 border transition-colors ${getBookingCardClass(booking.status)}`}
+                  className={`overflow-hidden rounded-3xl p-5 sm:p-6 md:p-8 border transition-colors ${getBookingCardClass(booking.status)}`}
                 >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-4">
-                        <h3 className="text-2xl">{booking.roomName}</h3>
+                  <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <h3 className="min-w-0 break-words text-xl sm:text-2xl">{booking.roomName}</h3>
                         <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border ${getStatusColor(
+                          className={`inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${getStatusColor(
                             booking.status
                           )}`}
                         >
@@ -176,33 +176,34 @@ export function Dashboard() {
                       </div>
 
                       <div className="grid sm:grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Calendar className="w-4 h-4" />
+                        <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
+                          <Calendar className="w-4 h-4 shrink-0" />
                           <span>
                             Check-in: {formatDate(booking.checkIn)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Calendar className="w-4 h-4" />
+                        <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
+                          <Calendar className="w-4 h-4 shrink-0" />
                           <span>
                             Check-out: {formatDate(booking.checkOut)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Users className="w-4 h-4" />
+                        <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
+                          <Users className="w-4 h-4 shrink-0" />
                           <span>{booking.guests} guests</span>
                         </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <MapPin className="w-4 h-4" />
-                          <span>Booking ID: {booking.id}</span>
+                        <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
+                          <MapPin className="w-4 h-4 shrink-0" />
+                          <span className="break-all">Booking ID: {booking.id}</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <p className="text-3xl mb-2">{formatCurrency(booking.totalPrice)}</p>
+                    <div className="w-full shrink-0 text-left sm:w-auto lg:text-right">
+                      <p className="mb-2 break-words text-2xl sm:text-3xl">{formatCurrency(booking.totalPrice)}</p>
                       <Button
                         variant="outline"
+                        className="w-full sm:w-auto"
                         onClick={() => setOpenBookingId(openBookingId === booking.id ? null : booking.id)}
                       >
                         {openBookingId === booking.id ? 'Hide Details' : 'View Details'}

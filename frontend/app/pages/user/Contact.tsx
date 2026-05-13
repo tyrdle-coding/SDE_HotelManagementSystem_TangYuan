@@ -8,6 +8,7 @@ import { Effect } from '../../components/Effect';
 import { Magnetic } from '../../components/Magnetic';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { hotelApi } from '../../api';
 
 const contactChannels = [
   { icon: Phone, title: 'Direct Line', detail: '+60 82-288 191', kicker: '24/7 Concierge' },
@@ -72,10 +73,21 @@ export function Contact() {
     message: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Your message has been sent to our concierge team. We will respond shortly.');
-    setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+    setIsSending(true);
+
+    try {
+      await hotelApi.sendContactMessage(formData);
+      toast.success('Your message has been sent to our concierge team. We will respond shortly.');
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to send inquiry');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -249,8 +261,8 @@ export function Contact() {
                   </div>
 
                   <Magnetic strength={10}>
-                    <Button type="submit" size="lg" className="w-full h-18 rounded-2xl bg-[#c19e58] text-white hover:bg-[#a68748] text-lg font-medium group transition-all duration-500 shadow-lg shadow-[#c19e58]/20">
-                      Send Inquiry
+                    <Button type="submit" size="lg" disabled={isSending} className="w-full h-18 rounded-2xl bg-[#c19e58] text-white hover:bg-[#a68748] text-lg font-medium group transition-all duration-500 shadow-lg shadow-[#c19e58]/20">
+                      {isSending ? 'Sending...' : 'Send Inquiry'}
                       <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </Magnetic>
