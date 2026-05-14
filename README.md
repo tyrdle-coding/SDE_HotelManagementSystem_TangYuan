@@ -148,4 +148,4 @@ npm run build
 npm start
 ```
 
-![Current Architecture](download.png)
+![Current Architecture](architecture.png)
